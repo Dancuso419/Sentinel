@@ -40,3 +40,12 @@ test('requireRole allows users with an allowed role', () => {
   requireRole('officer', 'admin')(req, res, next);
   expect(next).toHaveBeenCalled();
 });
+
+test('requireRole blocks when no session user', () => {
+  const req = { session: {} };
+  const res = mockRes();
+  const next = jest.fn();
+  requireRole('officer', 'admin')(req, res, next);
+  expect(res.status).toHaveBeenCalledWith(401);
+  expect(next).not.toHaveBeenCalled();
+});
