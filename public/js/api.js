@@ -1,3 +1,9 @@
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str === null || str === undefined ? '' : String(str);
+  return div.innerHTML;
+}
+
 async function apiRequest(method, url, body) {
   const opts = { method, headers: {} };
   if (body instanceof FormData) {

@@ -10,7 +10,7 @@
   const tbody = document.querySelector('#reports-table tbody');
   tbody.innerHTML = reports.map(r => `
     <tr>
-      <td>${r.case_id}</td><td>${r.type}</td><td>${r.status}</td><td>${r.updated_at}</td>
+      <td>${escapeHtml(r.case_id)}</td><td>${escapeHtml(r.type)}</td><td>${escapeHtml(r.status)}</td><td>${escapeHtml(r.updated_at)}</td>
       <td><a href="/api/cases/${r.case_id}/pdf">Download</a></td>
     </tr>
   `).join('');

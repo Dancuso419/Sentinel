@@ -1,7 +1,8 @@
 async function loadAnalytics() {
-  const { byType, byStatus } = await apiRequest('GET', '/api/admin/analytics');
-  document.getElementById('by-type').innerHTML = byType.map(r => `<li>${r.type}: ${r.count}</li>`).join('');
-  document.getElementById('by-status').innerHTML = byStatus.map(r => `<li>${r.status}: ${r.count}</li>`).join('');
+  const { byType, byStatus, byDate } = await apiRequest('GET', '/api/admin/analytics');
+  document.getElementById('by-type').innerHTML = byType.map(r => `<li>${escapeHtml(r.type)}: ${escapeHtml(r.count)}</li>`).join('');
+  document.getElementById('by-status').innerHTML = byStatus.map(r => `<li>${escapeHtml(r.status)}: ${escapeHtml(r.count)}</li>`).join('');
+  document.getElementById('by-date').innerHTML = (byDate || []).map(r => `<li>${escapeHtml(r.date)}: ${escapeHtml(r.count)}</li>`).join('');
 }
 
 async function loadUsers() {
@@ -9,7 +10,7 @@ async function loadUsers() {
   const tbody = document.querySelector('#users-table tbody');
   tbody.innerHTML = users.map(u => `
     <tr>
-      <td>${u.name}</td><td>${u.email}</td><td>${u.is_active ? 'Yes' : 'No'}</td>
+      <td>${escapeHtml(u.name)}</td><td>${escapeHtml(u.email)}</td><td>${u.is_active ? 'Yes' : 'No'}</td>
       <td><button data-id="${u.id}" data-active="${u.is_active}" class="toggle-btn">${u.is_active ? 'Deactivate' : 'Activate'}</button></td>
     </tr>
   `).join('');

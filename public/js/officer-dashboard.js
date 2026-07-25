@@ -4,15 +4,15 @@ async function loadReports(params = {}) {
   const tbody = document.querySelector('#reports-table tbody');
   tbody.innerHTML = reports.map(r => `
     <tr>
-      <td>${r.case_id}</td><td>${r.type}</td><td>${r.is_anonymous ? 'Anonymous' : (r.citizen_name || 'Walk-in')}</td>
-      <td>${r.status}</td>
+      <td>${escapeHtml(r.case_id)}</td><td>${escapeHtml(r.type)}</td><td>${r.is_anonymous ? 'Anonymous' : escapeHtml(r.citizen_name || 'Walk-in')}</td>
+      <td>${escapeHtml(r.status)}</td>
       <td>
         <select data-case="${r.case_id}" class="status-select">
           <option ${r.status === 'pending' ? 'selected' : ''}>pending</option>
           <option ${r.status === 'investigating' ? 'selected' : ''}>investigating</option>
           <option ${r.status === 'resolved' ? 'selected' : ''}>resolved</option>
         </select>
-        <input data-case="${r.case_id}" class="note-input" placeholder="Resolution note" value="${r.resolution_note || ''}">
+        <input data-case="${r.case_id}" class="note-input" placeholder="Resolution note" value="${escapeHtml(r.resolution_note || '')}">
         <button data-case="${r.case_id}" class="save-btn">Save</button>
       </td>
       <td><a href="/api/officer/reports/${r.case_id}/pdf">Download</a></td>
