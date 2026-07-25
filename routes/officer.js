@@ -1,5 +1,6 @@
 const express = require('express');
 const { requireRole } = require('../middleware/auth');
+const { streamCaseSummary } = require('../lib/casePdf');
 
 const router = express.Router();
 const WORKFLOW = ['pending', 'investigating', 'resolved'];
@@ -58,6 +59,13 @@ router.patch('/reports/:case_id/status', (req, res) => {
     .run(report.id, status, String(req.session.user.id));
 
   res.json({ ok: true });
+});
+
+router.get('/reports/:case_id/pdf', (req, res) => {
+  const db = req.app.locals.db;
+  const report = db.prepare('SELECT * FROM reports WHERE case_id = ?').get(req.params.case_id);
+  if (!report) return res.status(404).json({ error: 'Case not found' });
+  streamCaseSummary(res, report);
 });
 
 module.exports = router;
