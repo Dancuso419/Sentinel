@@ -16,10 +16,20 @@ async function loadUsers() {
   `).join('');
 
   tbody.querySelectorAll('.toggle-btn').forEach(btn => btn.addEventListener('click', async () => {
-    await apiRequest('PATCH', `/api/admin/users/${btn.dataset.id}/active`, { is_active: btn.dataset.active !== 'true' });
-    loadUsers();
+    try {
+      await apiRequest('PATCH', `/api/admin/users/${btn.dataset.id}/active`, { is_active: btn.dataset.active !== '1' });
+      await loadUsers();
+    } catch (err) {
+      alert(err.message);
+    }
   }));
 }
 
-loadAnalytics();
-loadUsers();
+document.getElementById('logout-btn').addEventListener('click', async () => {
+  await apiRequest('POST', '/api/auth/logout').catch(() => {});
+  window.location.href = 'login.html';
+});
+
+Promise.all([loadAnalytics(), loadUsers()]).catch(() => {
+  window.location.href = 'login.html';
+});

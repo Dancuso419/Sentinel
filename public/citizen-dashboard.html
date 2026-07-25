@@ -2,10 +2,10 @@
 <html lang="en">
 <head><meta charset="UTF-8"><title>My Reports — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
 <body>
-  <header><h1>My Reports</h1><a href="report-citizen.html">Submit New Report</a></header>
+  <header><h1>My Reports</h1><nav><a href="report-citizen.html">Submit New Report</a><button id="logout-btn" type="button">Logout</button></nav></header>
   <main>
     <div id="banner" style="display:none" class="success"></div>
-    <table id="reports-table"><thead><tr><th>Case ID</th><th>Type</th><th>Status</th><th>Updated</th><th>PDF</th></tr></thead><tbody></tbody></table>
+    <table id="reports-table"><thead><tr><th>Case ID</th><th>Type</th><th>Status</th><th>Updated</th><th>Evidence</th><th>PDF</th><th>Actions</th></tr></thead><tbody></tbody></table>
   </main>
   <script src="js/api.js"></script>
   <script src="js/citizen-dashboard.js"></script>

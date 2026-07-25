@@ -7,7 +7,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       email: form.get('email'), password: form.get('password')
     });
     const destinations = { citizen: 'citizen-dashboard.html', officer: 'officer-dashboard.html', admin: 'admin-dashboard.html' };
-    window.location.href = destinations[user.role];
+    window.location.href = destinations[user.role] || 'index.html';
   } catch (err) {
     message.textContent = err.message;
     message.className = 'error';
