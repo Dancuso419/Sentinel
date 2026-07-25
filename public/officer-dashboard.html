@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Officer Dashboard — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+  <header><h1>Officer Dashboard</h1></header>
+  <main>
+    <form id="filter-form">
+      <select name="status"><option value="">All statuses</option><option>pending</option><option>investigating</option><option>resolved</option></select>
+      <input name="type" placeholder="Type (e.g. Theft)">
+      <input name="from" type="date"><input name="to" type="date">
+      <button type="submit">Filter</button>
+    </form>
+    <table id="reports-table"><thead><tr><th>Case ID</th><th>Type</th><th>Reporter</th><th>Status</th><th>Update</th><th>PDF</th></tr></thead><tbody></tbody></table>
+  </main>
+  <script src="js/api.js"></script>
+  <script src="js/officer-dashboard.js"></script>
+</body>
+</html>
