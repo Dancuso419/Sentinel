@@ -4,17 +4,18 @@
 
 **Goal:** Build the Computerized Crime Reporting and Tracking System (CCRTS) described in `build.md` — a small-scale Node/Express + SQLite web app for citizens to report crimes, officers to track/resolve cases, and admins to manage users and view analytics.
 
-**Architecture:** Server-rendered-free SPA-lite: static HTML/CSS/vanilla-JS pages in `public/` call a JSON REST API (`/api/*`) served by Express. SQLite (via `better-sqlite3`, synchronous) is the single data store. Session-based auth with role guards on API routes. File uploads go to local disk via multer.
+**Architecture:** Server-rendered-free SPA-lite: static HTML/CSS/vanilla-JS pages in `public/` call a JSON REST API (`/api/*`) served by Express. SQLite (via Node's built-in `node:sqlite` module, synchronous) is the single data store — chosen over `better-sqlite3` because this environment has no working Python/node-gyp toolchain to compile native modules, and no prebuilt binary exists for the installed Node version; `node:sqlite` ships in Node itself, no native build step required. Session-based auth with role guards on API routes. File uploads go to local disk via multer.
 
-**Tech Stack:** Node.js ≥ 18, Express, better-sqlite3, express-session, bcrypt, multer, pdfkit. Dev/test: Jest + Supertest.
+**Tech Stack:** Node.js ≥ 22.5 (for built-in `node:sqlite`), Express, express-session, bcryptjs, multer, pdfkit. Dev/test: Jest + Supertest.
 
 ## Global Constraints
 
-- Node.js >= 18, CommonJS modules (`require`/`module.exports`) throughout — matches Express ecosystem convention, no build step.
-- Runtime deps: `express`, `express-session`, `bcrypt`, `multer`, `pdfkit`, `better-sqlite3`. Dev deps: `jest`, `supertest`.
+- Node.js >= 22.5, CommonJS modules (`require`/`module.exports`) throughout — matches Express ecosystem convention, no build step.
+- Runtime deps: `express`, `express-session`, `bcryptjs`, `multer`, `pdfkit`. Dev deps: `jest`, `supertest`. SQLite access uses the built-in `node:sqlite` module (`DatabaseSync`) — no dependency entry, no native compilation. `bcryptjs` (not `bcrypt`) is used deliberately — pure JS, no native compilation, same bcrypt algorithm and `hash()`/`compare()` API.
+- `node:sqlite`'s `DatabaseSync` has no `.transaction()` helper (unlike `better-sqlite3`) — multi-statement writes that must be atomic (e.g. the case-ID counter bump) wrap manually in `db.exec('BEGIN')` / `db.exec('COMMIT')`, with `db.exec('ROLLBACK')` on error.
 - Case ID format: `CR-YYYY-NNNN`, auto-incrementing per calendar year, zero-padded to 4 digits (e.g. `CR-2026-0001`).
 - Evidence uploads: `.jpg`, `.jpeg`, `.png`, `.pdf` only, 5MB max file size, stored under `uploads/` (gitignored).
-- Passwords hashed with bcrypt, cost factor 10. Never store or log plaintext passwords.
+- Passwords hashed with bcryptjs, cost factor 10. Never store or log plaintext passwords.
 - Auth is session-based (`express-session`, default `MemoryStore` — acceptable at this single-process demo scale). Session cookie name: `ccrts.sid`.
 - Roles: `citizen`, `officer`, `admin`. Route guards enforce role via `middleware/auth.js`.
 - Status workflow is strictly linear: `pending -> investigating -> resolved`. No skipping backward.
@@ -35,7 +36,7 @@ Sentinel Project/
 ├── database/
 │   ├── ccrts.db                 # generated, gitignored
 │   ├── schema.sql                # all table definitions
-│   ├── db.js                     # createDb(filePath) -> better-sqlite3 instance
+│   ├── db.js                     # createDb(filePath) -> node:sqlite DatabaseSync instance
 │   └── seed.js                   # sample users + reports, run via `node database/seed.js`
 ├── lib/
 │   ├── caseId.js                  # nextCaseId(db, year) -> "CR-YYYY-NNNN"
@@ -106,8 +107,7 @@ Sentinel Project/
     "test": "jest --runInBand"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "better-sqlite3": "^11.3.0",
+    "bcryptjs": "^2.4.3",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "multer": "^1.4.5-lts.1",
@@ -192,7 +192,7 @@ git commit -m "chore: project scaffold and server entry point"
 - Test: `tests/db.test.js`
 
 **Interfaces:**
-- Produces: `createDb(filePath)` from `database/db.js` — returns a `better-sqlite3` `Database` instance with schema applied and `foreign_keys` pragma on. Pass `':memory:'` for tests.
+- Produces: `createDb(filePath)` from `database/db.js` — returns a `node:sqlite` `DatabaseSync` instance with schema applied and `foreign_keys` pragma on. Pass `':memory:'` for tests.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -264,11 +264,11 @@ CREATE TABLE IF NOT EXISTS case_counters (
 ```javascript
 const fs = require('fs');
 const path = require('path');
-const Database = require('better-sqlite3');
+const { DatabaseSync } = require('node:sqlite');
 
 function createDb(filePath) {
-  const db = new Database(filePath);
-  db.pragma('foreign_keys = ON');
+  const db = new DatabaseSync(filePath);
+  db.exec('PRAGMA foreign_keys = ON');
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
   db.exec(schema);
   return db;
@@ -298,7 +298,7 @@ git commit -m "feat: database schema and connection module"
 - Test: `tests/caseId.test.js`
 
 **Interfaces:**
-- Consumes: a `better-sqlite3` `Database` instance from Task 2's `createDb`.
+- Consumes: a `node:sqlite` `DatabaseSync` instance from Task 2's `createDb`.
 - Produces: `nextCaseId(db, year)` -> `string` in format `CR-YYYY-NNNN`. Later tasks (report submission) call this to assign `case_id`.
 
 - [ ] **Step 1: Write the failing test**
@@ -325,18 +325,27 @@ Expected: FAIL with `Cannot find module '../lib/caseId'`
 - [ ] **Step 3: Write `lib/caseId.js`**
 
 ```javascript
+function bumpCounter(db, year) {
+  const row = db.prepare('SELECT count FROM case_counters WHERE year = ?').get(year);
+  const next = row ? row.count + 1 : 1;
+  if (row) {
+    db.prepare('UPDATE case_counters SET count = ? WHERE year = ?').run(next, year);
+  } else {
+    db.prepare('INSERT INTO case_counters (year, count) VALUES (?, ?)').run(year, next);
+  }
+  return next;
+}
+
 function nextCaseId(db, year) {
-  const bump = db.transaction((yr) => {
-    const row = db.prepare('SELECT count FROM case_counters WHERE year = ?').get(yr);
-    const next = row ? row.count + 1 : 1;
-    if (row) {
-      db.prepare('UPDATE case_counters SET count = ? WHERE year = ?').run(next, yr);
-    } else {
-      db.prepare('INSERT INTO case_counters (year, count) VALUES (?, ?)').run(yr, next);
-    }
-    return next;
-  });
-  const n = bump(year);
+  db.exec('BEGIN');
+  let n;
+  try {
+    n = bumpCounter(db, year);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
   return `CR-${year}-${String(n).padStart(4, '0')}`;
 }
 
@@ -625,7 +634,7 @@ Expected: FAIL with `Cannot find module '../routes/auth'`
 
 ```javascript
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { isValidEmail, requireFields } = require('../lib/validators');
 
 const router = express.Router();
@@ -1675,7 +1684,7 @@ git commit -m "feat: PDF case summary export for officers and citizens"
 
 ```javascript
 const path = require('path');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { createDb } = require('./db');
 const { nextCaseId } = require('../lib/caseId');
 
@@ -1722,7 +1731,7 @@ seed();
 - [ ] **Step 2: Run and verify**
 
 Run: `npm run seed`
-Expected: Console prints the seed confirmation message; `database/ccrts.db` now contains the sample rows (spot-check with `sqlite3 database/ccrts.db "SELECT case_id, status FROM reports;"` if the `sqlite3` CLI is available, otherwise verify via a throwaway `node -e` script using `better-sqlite3`).
+Expected: Console prints the seed confirmation message; `database/ccrts.db` now contains the sample rows (spot-check with `sqlite3 database/ccrts.db "SELECT case_id, status FROM reports;"` if the `sqlite3` CLI is available, otherwise verify via a throwaway `node -e` script using `require('node:sqlite')`).
 
 - [ ] **Step 3: Commit**
 
