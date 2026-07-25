@@ -137,6 +137,63 @@ test('resubmitting the same status is a no-op and does not duplicate history', a
   expect(row.unseen_status_change).toBe(0);
 });
 
+test('same-status resubmission with a changed resolution_note still persists the note', async () => {
+  const app = buildApp();
+  const citizen = request.agent(app);
+  await registerAndLogin(app, citizen);
+  const create = await citizen.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const officer = request.agent(app);
+  await registerAndLogin(app, officer, { email: 'officer@example.com', role: 'officer' });
+  await officer.patch(`/api/officer/reports/${caseId}/status`).send({ status: 'investigating' });
+
+  // Dashboard always submits status + resolution_note together. Officer edits only the
+  // note here; the status is resubmitted unchanged.
+  const res = await officer.patch(`/api/officer/reports/${caseId}/status`)
+    .send({ status: 'investigating', resolution_note: 'Spoke to two witnesses near the market entrance.' });
+  expect(res.status).toBe(200);
+
+  const db = app.locals.db;
+  const row = db.prepare('SELECT resolution_note FROM reports WHERE case_id = ?').get(caseId);
+  expect(row.resolution_note).toBe('Spoke to two witnesses near the market entrance.');
+
+  // Fetching via the officer list endpoint should reflect the persisted note too.
+  const list = await officer.get('/api/officer/reports');
+  const report = list.body.reports.find(r => r.case_id === caseId);
+  expect(report.resolution_note).toBe('Spoke to two witnesses near the market entrance.');
+
+  // A same-status note update must not spam the audit trail with a duplicate row.
+  const history = db.prepare('SELECT * FROM status_history WHERE report_id = (SELECT id FROM reports WHERE case_id = ?) ORDER BY id').all(caseId);
+  expect(history.map(h => h.status)).toEqual(['pending', 'investigating']);
+});
+
+test('same-status resubmission of resolved with an already-set note does not spuriously 400', async () => {
+  const app = buildApp();
+  const citizen = request.agent(app);
+  await registerAndLogin(app, citizen);
+  const create = await citizen.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const officer = request.agent(app);
+  await registerAndLogin(app, officer, { email: 'officer@example.com', role: 'officer' });
+  await officer.patch(`/api/officer/reports/${caseId}/status`).send({ status: 'investigating' });
+  await officer.patch(`/api/officer/reports/${caseId}/status`)
+    .send({ status: 'resolved', resolution_note: 'Case closed, suspect apprehended.' });
+
+  // Resubmit 'resolved' again without refilling the note field.
+  const res = await officer.patch(`/api/officer/reports/${caseId}/status`).send({ status: 'resolved' });
+  expect(res.status).toBe(200);
+
+  const db = app.locals.db;
+  const row = db.prepare('SELECT resolution_note FROM reports WHERE case_id = ?').get(caseId);
+  expect(row.resolution_note).toBe('Case closed, suspect apprehended.');
+});
+
 test('officer can fetch the status-history audit trail for a report', async () => {
   const app = buildApp();
   const citizen = request.agent(app);

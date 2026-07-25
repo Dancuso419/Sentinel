@@ -56,13 +56,30 @@ router.patch('/reports/:case_id/status', (req, res) => {
     const currentIdx = WORKFLOW.indexOf(report.status);
     const nextIdx = WORKFLOW.indexOf(status);
     if (nextIdx < currentIdx) return res.status(409).json({ error: 'Cannot move status backward' });
-    if (status === 'resolved' && !resolution_note?.trim()) {
+
+    // Treat a non-empty resolution_note as an actual update request; blank/undefined/null
+    // means "leave the existing note alone" (matches the COALESCE behavior below).
+    const noteProvided = typeof resolution_note === 'string' && resolution_note.trim() !== '';
+    const effectiveNote = noteProvided ? resolution_note : report.resolution_note;
+
+    // Only block on a missing note when this would actually put the case into 'resolved'
+    // without one ever having been recorded — a same-status resubmission that keeps (or
+    // updates) an already-present note must not spuriously 400.
+    if (status === 'resolved' && !effectiveNote?.trim()) {
       return res.status(400).json({ error: 'Resolution note is required to resolve a case' });
     }
 
     // No-op resubmission of the current status: don't write a duplicate status_history
-    // row or re-flag unseen_status_change.
+    // row or re-flag unseen_status_change. Still persist a genuinely changed
+    // resolution_note though — the dashboard always submits both fields together, so
+    // dropping the note here would silently discard officer edits.
     if (status === report.status) {
+      if (noteProvided && resolution_note !== report.resolution_note) {
+        db.prepare(`
+          UPDATE reports SET resolution_note = ?, updated_at = datetime('now')
+          WHERE id = ?
+        `).run(resolution_note, report.id);
+      }
       return res.json({ ok: true });
     }
 
