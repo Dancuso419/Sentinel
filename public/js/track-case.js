@@ -5,10 +5,10 @@ document.getElementById('track-form').addEventListener('submit', async (e) => {
   try {
     const report = await apiRequest('GET', `/api/cases/${encodeURIComponent(caseId)}`);
     result.innerHTML = `
-      <p><strong>Case:</strong> ${report.case_id}</p>
-      <p><strong>Type:</strong> ${report.type}</p>
-      <p><strong>Status:</strong> ${report.status}</p>
-      ${report.status === 'resolved' ? `<p><strong>Resolution:</strong> ${report.resolution_note}</p>` : ''}
+      <p><strong>Case:</strong> ${escapeHtml(report.case_id)}</p>
+      <p><strong>Type:</strong> ${escapeHtml(report.type)}</p>
+      <p><strong>Status:</strong> ${escapeHtml(report.status)}</p>
+      ${report.status === 'resolved' ? `<p><strong>Resolution:</strong> ${escapeHtml(report.resolution_note)}</p>` : ''}
     `;
     result.className = '';
   } catch (err) {
