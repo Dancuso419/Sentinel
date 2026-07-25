@@ -88,7 +88,7 @@ function loadOwnedPendingReport(req, res, next) {
   const db = req.app.locals.db;
   const report = db.prepare('SELECT * FROM reports WHERE case_id = ?').get(req.params.case_id);
   if (!report) return res.status(404).json({ error: 'Case not found' });
-  if (report.citizen_id !== req.session.user.id) return res.status(403).json({ error: 'Not your report' });
+  if (report.citizen_id !== req.session.user.id) return res.status(404).json({ error: 'Case not found' });
   if (report.status !== 'pending') return res.status(409).json({ error: 'Report is locked once status has moved past pending' });
   req.report = report;
   next();

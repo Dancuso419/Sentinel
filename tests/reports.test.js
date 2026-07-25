@@ -180,7 +180,7 @@ test('non-owner cannot edit or withdraw a report', async () => {
   const otherAgent = request.agent(app);
   await registerAndLogin(otherAgent, { email: 'other@example.com' });
   const res = await otherAgent.delete(`/api/reports/${caseId}`);
-  expect(res.status).toBe(403);
+  expect(res.status).toBe(404);
 });
 
 test('owner can withdraw (delete) their own pending report', async () => {
