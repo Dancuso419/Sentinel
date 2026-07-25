@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { createDb } = require('../database/db');
+const { registerAndLogin } = require('./helpers');
 
 function buildApp() {
   const app = express();
@@ -16,16 +17,10 @@ function buildApp() {
   return app;
 }
 
-async function registerAndLogin(agent, overrides = {}) {
-  const user = { name: 'Ada', email: 'ada@example.com', password: 'secret123', role: 'citizen', ...overrides };
-  await agent.post('/api/auth/register').send(user);
-  await agent.post('/api/auth/login').send({ email: user.email, password: user.password });
-}
-
 test('registered citizen submits a report and receives a case ID', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
 
   const res = await agent.post('/api/reports')
     .field('type', 'Theft')
@@ -47,7 +42,7 @@ test('citizen report requires auth', async () => {
 test('citizen report rejects missing required fields', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
   const res = await agent.post('/api/reports').field('type', 'Theft');
   expect(res.status).toBe(400);
 });
@@ -70,7 +65,7 @@ test('walk-in report requires no auth and stores no citizen_id', async () => {
 test('rejects evidence file over 5MB', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
 
   const bigFile = path.join(os.tmpdir(), 'big-evidence.png');
   fs.writeFileSync(bigFile, Buffer.alloc(5 * 1024 * 1024 + 1));
@@ -89,7 +84,7 @@ test('rejects evidence file over 5MB', async () => {
 test('rejects wrong evidence file type and does not leave orphaned file on disk', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
 
   const uploadsDir = path.join(__dirname, '..', 'uploads');
   const beforeFiles = new Set(fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : []);
@@ -115,7 +110,7 @@ test('rejects wrong evidence file type and does not leave orphaned file on disk'
 test('rejects valid evidence file when required fields are missing and does not leave orphaned file on disk', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
 
   const uploadsDir = path.join(__dirname, '..', 'uploads');
   const beforeFiles = new Set(fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : []);
@@ -138,7 +133,7 @@ test('rejects valid evidence file when required fields are missing and does not 
 test('owner can edit their own pending report', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
 
   const create = await agent.post('/api/reports')
     .field('type', 'Theft').field('location', 'Main Market')
@@ -156,7 +151,7 @@ test('owner can edit their own pending report', async () => {
 test('cannot edit a report once status has moved past pending', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
   const create = await agent.post('/api/reports')
     .field('type', 'Theft').field('location', 'Main Market')
     .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
@@ -171,14 +166,14 @@ test('cannot edit a report once status has moved past pending', async () => {
 test('non-owner cannot edit or withdraw a report', async () => {
   const app = buildApp();
   const ownerAgent = request.agent(app);
-  await registerAndLogin(ownerAgent);
+  await registerAndLogin(app, ownerAgent);
   const create = await ownerAgent.post('/api/reports')
     .field('type', 'Theft').field('location', 'Main Market')
     .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
   const caseId = create.body.case_id;
 
   const otherAgent = request.agent(app);
-  await registerAndLogin(otherAgent, { email: 'other@example.com' });
+  await registerAndLogin(app, otherAgent, { email: 'other@example.com' });
   const res = await otherAgent.delete(`/api/reports/${caseId}`);
   expect(res.status).toBe(404);
 });
@@ -186,7 +181,7 @@ test('non-owner cannot edit or withdraw a report', async () => {
 test('owner can withdraw (delete) their own pending report', async () => {
   const app = buildApp();
   const agent = request.agent(app);
-  await registerAndLogin(agent);
+  await registerAndLogin(app, agent);
   const create = await agent.post('/api/reports')
     .field('type', 'Theft').field('location', 'Main Market')
     .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
@@ -197,4 +192,56 @@ test('owner can withdraw (delete) their own pending report', async () => {
 
   const row = app.locals.db.prepare('SELECT * FROM reports WHERE case_id = ?').get(caseId);
   expect(row).toBeUndefined();
+});
+
+test('withdrawing a report with evidence deletes the evidence file from disk', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(app, agent);
+
+  const evidenceFile = path.join(os.tmpdir(), 'withdraw-evidence.png');
+  fs.writeFileSync(evidenceFile, Buffer.alloc(1024));
+
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00')
+    .attach('evidence', evidenceFile);
+  fs.unlinkSync(evidenceFile);
+  const caseId = create.body.case_id;
+
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  const row = app.locals.db.prepare('SELECT evidence_path FROM reports WHERE case_id = ?').get(caseId);
+  expect(row.evidence_path).toBeTruthy();
+  const storedPath = path.join(uploadsDir, row.evidence_path);
+  expect(fs.existsSync(storedPath)).toBe(true);
+
+  const res = await agent.delete(`/api/reports/${caseId}`);
+  expect(res.status).toBe(200);
+  expect(fs.existsSync(storedPath)).toBe(false);
+});
+
+test('edit rejects a blank provided field', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(app, agent);
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const edit = await agent.put(`/api/reports/${caseId}`).send({ description: '   ' });
+  expect(edit.status).toBe(400);
+});
+
+test('edit rejects a non-string provided field', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(app, agent);
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const edit = await agent.put(`/api/reports/${caseId}`).send({ description: { nested: true } });
+  expect(edit.status).toBe(400);
 });

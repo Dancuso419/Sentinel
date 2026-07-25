@@ -22,7 +22,23 @@ app.use('/api/cases', require('./routes/cases'));
 app.use('/api/officer', require('./routes/officer'));
 app.use('/api/admin', require('./routes/admin'));
 
+// Any /api/* request that didn't match a router above gets a JSON 404, not the
+// default Express HTML 404 page.
+app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Generic error-handling middleware: a safety net alongside the try/catch blocks
+// in each route so an unexpected thrown error never crashes the process or leaks
+// internals to the client.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  if (req.path.startsWith('/api')) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+  res.status(500).send('Internal server error');
+});
 
 if (require.main === module) {
   const port = process.env.PORT || 3000;

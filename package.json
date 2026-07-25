@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Computerized Crime Reporting and Tracking System",
   "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server.js",
     "seed": "node database/seed.js",
