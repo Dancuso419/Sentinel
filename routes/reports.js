@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('node:fs');
 const { requireAuth } = require('../middleware/auth');
 const { requireFields, isAllowedEvidenceFile, MAX_EVIDENCE_BYTES } = require('../lib/validators');
 const { nextCaseId } = require('../lib/caseId');
@@ -13,10 +14,17 @@ const upload = multer({
   limits: { fileSize: MAX_EVIDENCE_BYTES }
 }).single('evidence');
 
+function deleteUploadedFile(req) {
+  if (req.file) {
+    fs.unlink(req.file.path, () => {});
+  }
+}
+
 function handleUpload(req, res, next) {
   upload(req, res, (err) => {
     if (err) return res.status(400).json({ error: 'Evidence file too large (max 5MB)' });
     if (req.file && !isAllowedEvidenceFile(req.file.mimetype, req.file.size)) {
+      deleteUploadedFile(req);
       return res.status(400).json({ error: 'Evidence must be jpg, png, or pdf, max 5MB' });
     }
     next();
@@ -41,7 +49,10 @@ function insertReport(db, { citizen_id, is_anonymous, type, location, descriptio
 router.post('/', requireAuth, handleUpload, (req, res) => {
   const { type, location, description, incident_time, is_anonymous } = req.body;
   const missing = requireFields({ type, location, description, incident_time }, REQUIRED);
-  if (missing.length) return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+  if (missing.length) {
+    deleteUploadedFile(req);
+    return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+  }
 
   const db = req.app.locals.db;
   const case_id = insertReport(db, {
@@ -57,7 +68,10 @@ router.post('/', requireAuth, handleUpload, (req, res) => {
 router.post('/walkin', handleUpload, (req, res) => {
   const { type, location, description, incident_time } = req.body;
   const missing = requireFields({ type, location, description, incident_time }, REQUIRED);
-  if (missing.length) return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+  if (missing.length) {
+    deleteUploadedFile(req);
+    return res.status(400).json({ error: `Missing fields: ${missing.join(', ')}` });
+  }
 
   const db = req.app.locals.db;
   const case_id = insertReport(db, {

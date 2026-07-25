@@ -85,3 +85,52 @@ test('rejects evidence file over 5MB', async () => {
   expect(res.status).toBe(400);
   fs.unlinkSync(bigFile);
 });
+
+test('rejects wrong evidence file type and does not leave orphaned file on disk', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  const beforeFiles = new Set(fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : []);
+
+  const badFile = path.join(os.tmpdir(), 'evidence.txt');
+  fs.writeFileSync(badFile, 'not an allowed file type');
+
+  const res = await agent.post('/api/reports')
+    .field('type', 'Theft')
+    .field('location', 'Main Market')
+    .field('description', 'desc')
+    .field('incident_time', '2026-07-20T10:00')
+    .attach('evidence', badFile);
+
+  expect(res.status).toBe(400);
+  fs.unlinkSync(badFile);
+
+  const afterFiles = fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : [];
+  const newFiles = afterFiles.filter((f) => !beforeFiles.has(f));
+  expect(newFiles).toHaveLength(0);
+});
+
+test('rejects valid evidence file when required fields are missing and does not leave orphaned file on disk', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  const beforeFiles = new Set(fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : []);
+
+  const goodFile = path.join(os.tmpdir(), 'evidence-valid.png');
+  fs.writeFileSync(goodFile, Buffer.alloc(1024));
+
+  const res = await agent.post('/api/reports')
+    .field('type', 'Theft')
+    .attach('evidence', goodFile);
+
+  expect(res.status).toBe(400);
+  fs.unlinkSync(goodFile);
+
+  const afterFiles = fs.existsSync(uploadsDir) ? fs.readdirSync(uploadsDir) : [];
+  const newFiles = afterFiles.filter((f) => !beforeFiles.has(f));
+  expect(newFiles).toHaveLength(0);
+});
