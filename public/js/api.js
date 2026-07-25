@@ -1,7 +1,9 @@
 function escapeHtml(str) {
   const div = document.createElement('div');
   div.textContent = str === null || str === undefined ? '' : String(str);
-  return div.innerHTML;
+  return div.innerHTML
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 async function apiRequest(method, url, body) {
