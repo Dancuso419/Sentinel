@@ -134,3 +134,67 @@ test('rejects valid evidence file when required fields are missing and does not 
   const newFiles = afterFiles.filter((f) => !beforeFiles.has(f));
   expect(newFiles).toHaveLength(0);
 });
+
+test('owner can edit their own pending report', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const edit = await agent.put(`/api/reports/${caseId}`).send({ description: 'Updated: phone and wallet stolen' });
+  expect(edit.status).toBe(200);
+
+  const db = app.locals.db;
+  const row = db.prepare('SELECT description FROM reports WHERE case_id = ?').get(caseId);
+  expect(row.description).toBe('Updated: phone and wallet stolen');
+});
+
+test('cannot edit a report once status has moved past pending', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  app.locals.db.prepare("UPDATE reports SET status = 'investigating' WHERE case_id = ?").run(caseId);
+
+  const edit = await agent.put(`/api/reports/${caseId}`).send({ description: 'trying to edit' });
+  expect(edit.status).toBe(409);
+});
+
+test('non-owner cannot edit or withdraw a report', async () => {
+  const app = buildApp();
+  const ownerAgent = request.agent(app);
+  await registerAndLogin(ownerAgent);
+  const create = await ownerAgent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const otherAgent = request.agent(app);
+  await registerAndLogin(otherAgent, { email: 'other@example.com' });
+  const res = await otherAgent.delete(`/api/reports/${caseId}`);
+  expect(res.status).toBe(403);
+});
+
+test('owner can withdraw (delete) their own pending report', async () => {
+  const app = buildApp();
+  const agent = request.agent(app);
+  await registerAndLogin(agent);
+  const create = await agent.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const res = await agent.delete(`/api/reports/${caseId}`);
+  expect(res.status).toBe(200);
+
+  const row = app.locals.db.prepare('SELECT * FROM reports WHERE case_id = ?').get(caseId);
+  expect(row).toBeUndefined();
+});

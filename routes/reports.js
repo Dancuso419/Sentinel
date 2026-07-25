@@ -84,4 +84,37 @@ router.post('/walkin', handleUpload, (req, res) => {
   res.status(201).json({ case_id });
 });
 
+function loadOwnedPendingReport(req, res, next) {
+  const db = req.app.locals.db;
+  const report = db.prepare('SELECT * FROM reports WHERE case_id = ?').get(req.params.case_id);
+  if (!report) return res.status(404).json({ error: 'Case not found' });
+  if (report.citizen_id !== req.session.user.id) return res.status(403).json({ error: 'Not your report' });
+  if (report.status !== 'pending') return res.status(409).json({ error: 'Report is locked once status has moved past pending' });
+  req.report = report;
+  next();
+}
+
+router.put('/:case_id', requireAuth, loadOwnedPendingReport, (req, res) => {
+  const { type, location, description, incident_time } = req.body;
+  const db = req.app.locals.db;
+  db.prepare(`
+    UPDATE reports SET
+      type = COALESCE(?, type),
+      location = COALESCE(?, location),
+      description = COALESCE(?, description),
+      incident_time = COALESCE(?, incident_time),
+      updated_at = datetime('now')
+    WHERE case_id = ?
+  `).run(type || null, location || null, description || null, incident_time || null, req.params.case_id);
+
+  res.json({ ok: true });
+});
+
+router.delete('/:case_id', requireAuth, loadOwnedPendingReport, (req, res) => {
+  const db = req.app.locals.db;
+  db.prepare('DELETE FROM status_history WHERE report_id = ?').run(req.report.id);
+  db.prepare('DELETE FROM reports WHERE id = ?').run(req.report.id);
+  res.json({ ok: true });
+});
+
 module.exports = router;
