@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Report a Crime — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+  <header><h1>Report a Crime (Anonymous)</h1></header>
+  <main>
+    <form id="report-form" data-endpoint="/api/reports/walkin">
+      <select name="type" required>
+        <option value="">Type of incident</option>
+        <option>Theft</option><option>Assault</option><option>Vandalism</option><option>Fraud</option><option>Other</option>
+      </select>
+      <input name="location" placeholder="Location" required>
+      <textarea name="description" placeholder="Description" required></textarea>
+      <input name="incident_time" type="datetime-local" required>
+      <label>Evidence (jpg, png, or pdf, max 5MB): <input name="evidence" type="file" accept=".jpg,.jpeg,.png,.pdf"></label>
+      <button type="submit">Submit Report</button>
+      <p id="message"></p>
+    </form>
+  </main>
+  <script src="js/report-form.js"></script>
+</body>
+</html>
