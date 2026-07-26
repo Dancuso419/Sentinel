@@ -7,3 +7,10 @@ uploads/*
 # rescued from uploads/ before clearing it. Never project content.
 database/*.backup-*
 database/orphaned-upload-*
+
+# Per-machine agent-tool settings. Ignored for a specific reason, not tidiness:
+# the permission allowlist in this file records the literal text of commands that
+# were approved, so anything passed inline on a command line — a token, a password
+# — ends up written into it verbatim. It has already happened once here. This
+# repository is public, so the file must never be committable by accident.
+.claude/settings.local.json
