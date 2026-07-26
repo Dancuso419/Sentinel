@@ -32,12 +32,17 @@
         if (span === 1 && headers[col]) cell.setAttribute('data-label', headers[col]);
         else cell.removeAttribute('data-label');
 
-        // A cell holding a control group is flagged here rather than matched with
-        // :has() in the stylesheet. The narrow-viewport layout depends on it — an
-        // unflagged cell puts a select and a text field in a 34% column — and this
-        // loop is already visiting every cell, so the flag costs nothing and does
-        // not ride on a selector some older mobile browsers still miss.
-        if (cell.querySelector('.row-update, .cell-actions')) cell.setAttribute('data-cell', 'block');
+        // A cell holding the status/note/save group is flagged here rather than
+        // matched with :has() in the stylesheet. The narrow-viewport layout depends
+        // on it — an unflagged cell puts a select and a text field in an 84px column
+        // — and this loop is already visiting every cell, so the flag costs nothing
+        // and does not ride on a selector some older mobile browsers still miss.
+        //
+        // Only .row-update qualifies. An actions cell holds two short buttons that
+        // fit the value column beside their label; giving those the full-width
+        // treatment too put "No file" and "PDF" on their own line under a heading
+        // and cost ~50px on every card for nothing.
+        if (cell.querySelector('.row-update')) cell.setAttribute('data-cell', 'block');
         else cell.removeAttribute('data-cell');
 
         col += span;

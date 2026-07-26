@@ -1314,6 +1314,12 @@ tr.is-muted-row td { color: var(--ink-mute); }
 @media (max-width: 900px) {
   .tile-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   :root { --s-section: 76px; }
+
+  /* An odd number of tiles in a 2-up grid leaves the last one stranded beside a gap,
+     which reads as something failing to load. Letting it span the row instead makes
+     the same arrangement look chosen. Matches only when the count is odd: the
+     citizen's three tiles and the landing page's five, never the officer's four. */
+  .tile-row > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 @media (max-width: 860px) {
@@ -1340,9 +1346,26 @@ tr.is-muted-row td { color: var(--ink-mute); }
   .rail-spacer { margin-top: 0; }
   .rail-account, .rail-open .rail-account { height: 44px; padding: 0; }
   .rail-link::after { display: none; }
+
+  /* Hold the touch target. As flex children these shrink below their set width when
+     the row is full — the admin's bar was compressing every icon to 37px. */
+  .rail-link { flex: none; }
+
+  /* The bottom bar carries navigation BETWEEN pages. The admin rail also holds four
+     in-page jump links, which took it to eight items and triggered exactly that
+     shrink. They point at sections of the page the reader is already on, so on a
+     phone they are a shortcut for scrolling rather than a way to reach anything —
+     dropping them costs no destination. Needs .rail in the selector to outrank
+     `body[data-role='admin'] .rail-admin-only { display: flex }`. */
+  .rail .rail-link[href^="#"] { display: none; }
   .rail-toggle { display: none; }
   .rail-open .rail-link { width: 44px; justify-content: center; padding: 0; }
   .rail-open .rail-label { display: none; }
+  /* Needs the full three-class path to beat `.rail-open .rail-account .rail-label`,
+     which turns the name and role back on for the expanded sidebar. Without this the
+     account chip keeps its label inside a 44px bottom-bar slot and shoulders every
+     other icon out of position — the bar looked broken rather than tight. */
+  .rail-open .rail-account .rail-label { display: none; }
   .app-main, .rail-open .app-main {
     margin-left: 0;
     padding-bottom: calc(112px + env(safe-area-inset-bottom));
@@ -1352,7 +1375,17 @@ tr.is-muted-row td { color: var(--ink-mute); }
 
 @media (max-width: 620px) {
   .paths { grid-template-columns: minmax(0, 1fr); }
-  .site-header { padding: var(--s-md) var(--s-md) 0; --pad-x: var(--s-md); }
+  /* Wordmark and nav will not sit on one line at this width, and letting them wrap
+     drops "Log in" onto a second row beside a vertically-centred wordmark — ragged,
+     and it reads as a mistake. Stacking them is the same decision made deliberately. */
+  .site-header {
+    padding: var(--s-md) var(--s-md) 0;
+    --pad-x: var(--s-md);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-sm);
+  }
+  .site-nav { margin-left: -11px; }
   .container { padding-inline: var(--s-md); --pad-x: var(--s-md); }
   .app-main { padding: var(--s-md) var(--s-md) calc(112px + env(safe-area-inset-bottom)); --pad-x: var(--s-md); }
   .card, .task-card { padding: var(--s-md); }
@@ -1471,7 +1504,7 @@ tr.is-muted-row td { color: var(--ink-mute); }
 
   tbody tr {
     display: block;
-    padding: var(--s-xs) var(--s-md);
+    padding: 2px var(--s-md) var(--s-sm);
     background: var(--surface);
     border: 1px solid var(--hairline);
     border-radius: var(--r-lg);
@@ -1481,17 +1514,30 @@ tr.is-muted-row td { color: var(--ink-mute); }
      and no device this block targets has a pointer to hover with. */
   tbody tr:hover { background: var(--surface); }
 
+  /* A fixed label column, not a percentage. At 34% of a 390px screen the labels got
+     105px they never needed and the values lost it — every location and name wrapped
+     early while the label sat in white space. 84px fits the longest label in any of
+     these tables ("Move the case", "Last updated") at label size. */
   tbody td {
     display: grid;
-    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    grid-template-columns: 84px minmax(0, 1fr);
     gap: var(--s-md);
-    align-items: baseline;
-    padding: 11px 0;
+    align-items: center;
+    padding: 8px 0;
     border-bottom: 0;
   }
   /* Dividers hang off the following cell, so the last one in a card needs no
      special case and cannot fight the table's own :last-child rules. */
   tbody td + td { border-top: 1px solid var(--hairline); }
+
+  /* Grid items stretch by default, which turned every status pill into a full-width
+     bar and every Trail button into a stretched slab — the single thing that made
+     these cards look broken rather than merely tall. A pill is a badge: it must be
+     as wide as its own text and no wider. */
+  tbody td > .pill,
+  tbody td > .btn,
+  tbody td > .case-id,
+  tbody td > .verdict-line { justify-self: start; }
 
   tbody td[data-label]::before {
     content: attr(data-label);
@@ -1511,18 +1557,36 @@ tr.is-muted-row td { color: var(--ink-mute); }
      data-cell is set by js/table-cards.js — see the note there on why not :has(). */
   tbody td[data-cell='block'] { display: block; }
   tbody td[data-cell='block']::before { display: block; margin-bottom: var(--s-sm); }
-  .row-update { gap: var(--s-sm); }
-  .row-update select, .row-update .note-input { width: 100%; flex: 1 1 100%; min-width: 0; }
-  .row-update .save-btn { width: 100%; }
+  /* Two rows rather than three stacked full-width controls. Save is a short word and
+     does not need 358px; giving the row back to the status select and keeping the
+     note on its own line saves ~60px on every one of the 38 cards in the queue. */
+  .row-update {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--s-sm);
+  }
+  .row-update select     { grid-area: 1 / 1; width: 100%; min-width: 0; }
+  .row-update .save-btn  { grid-area: 1 / 2; width: auto; }
+  .row-update .note-input { grid-area: 2 / 1 / 3 / 3; width: 100%; min-width: 0; flex: none; }
   .row-msg { max-width: none; }
-  .cell-actions { gap: var(--s-sm); }
-  .cell-actions .btn { flex: 1 1 auto; }
+
+  /* Sized to their own text. Stretching these to fill the row spaced "No file" and
+     "PDF" halfway across the card with nothing between them. */
+  .cell-actions { gap: var(--s-sm); align-items: center; }
+  .cell-actions .btn { flex: 0 0 auto; }
 
   /* An expandable panel belongs to the case above it. Squaring its top corners and
      closing the gap is what says "still this case" rather than "a new one". */
-  /* The negative margin cancels the flex gap so the panel meets the card above it;
-     dropping its own top border stops that meeting point rendering as a 2px seam. */
-  tr.history-row, tr.edit-row {
+  /* A panel that belongs to the case above it: the officer trail, the citizen's edit
+     form, the standings quality bar. The negative margin cancels the flex gap so it
+     meets that card, and dropping its own top border stops the join rendering as a
+     2px seam.
+
+     Keyed on "a detail row that follows another row" rather than on each panel's own
+     class, so the three stay consistent without the selector needing to know about
+     them individually. The empty-state row is also .detail-row but is the only row in
+     its tbody, so it has no predecessor to attach to and correctly stays a card. */
+  tbody tr + tr.detail-row {
     margin-top: calc(var(--s-md) * -1);
     border-top: 0;
     border-top-left-radius: 0;
@@ -1530,13 +1594,12 @@ tr.is-muted-row td { color: var(--ink-mute); }
     background: var(--canvas);
     box-shadow: none;
   }
-  tr.history-row > td, tr.edit-row > td { padding: var(--s-md) 0; border-top: 0; }
+  tbody tr + tr.detail-row > td { padding: var(--s-md) 0; border-top: 0; }
 
-  /* And the card squares off its own bottom corners while that panel is open, so the
-     two read as one object. Cosmetic only — where :has() is missing the panel still
-     attaches, it just keeps rounded corners at the join. */
-  tbody tr:has(+ tr.history-row:not([hidden])),
-  tbody tr:has(+ tr.edit-row:not([hidden])) {
+  /* And the card squares off its own bottom corners while that panel is showing, so
+     the two read as one object. Cosmetic only — where :has() is missing the panel
+     still attaches, it just keeps rounded corners at the join. */
+  tbody tr:has(+ tr.detail-row:not([hidden])) {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
   }
