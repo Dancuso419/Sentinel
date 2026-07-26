@@ -1120,6 +1120,11 @@ tr[hidden] { display: none; }
 
 .pill-inactive { background: var(--hairline); color: var(--ink-soft); }
 
+/* First run: the account is unusable until the password is replaced, so this is a
+   stop rather than a hint — peach, the same tint pending work carries elsewhere. */
+.banner-first-run { background: var(--tile-peach); color: var(--tile-peach-ink); }
+.banner-first-run[hidden] { display: none; }
+
 /* ---------- account page -------------------------------------------------- */
 
 .account-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-md); align-items: start; }

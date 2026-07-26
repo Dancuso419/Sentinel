@@ -189,6 +189,33 @@ Three tiers, each requiring a strictly stronger credential:
 takes **no role field at all** — `'officer'` is written into the SQL literal, so no
 request body can escalate past it.
 
+### First-login password change
+
+An officer account is created with a password the **admin** chose and then has to
+communicate — so it is known to at least two people before it has ever been used.
+`must_change_password` is set on creation, and the account is genuinely unusable
+until it is cleared:
+
+```js
+app.use('/api/auth',  require('./routes/auth'));   // reachable
+app.use(enforcePasswordChange);                    // ← the gate
+app.use('/api/reports', ...);                      // everything below is blocked
+```
+
+`enforcePasswordChange` sits in `server.js` above every router except `/api/auth`
+and `/api/stats`, and returns `403` with `code: 'PASSWORD_CHANGE_REQUIRED'`. It is
+server-side rather than a prompt in the interface because a prompt the browser draws
+is bypassed by calling the API directly — the account has to be genuinely inert, not
+merely awkward.
+
+`/api/auth` stays above the gate so the holder can still do the only three things
+they need: read `/me`, change the password, and log out. Changing the password
+clears the flag, and the same session immediately works — no re-login.
+
+On the client, `apiRequest()` in `js/api.js` intercepts that code globally and
+redirects to `account.html?first=1`, so no page has to handle it individually. The
+banner there is driven by the server's flag, never by the query string.
+
 **No HTTP endpoint anywhere can create an administrator.** That is what stops a
 stolen admin session from minting a permanent backdoor. The one out-of-band path is
 `scripts/create-admin.js`, whose credential is shell access to the machine holding

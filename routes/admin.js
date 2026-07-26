@@ -174,9 +174,12 @@ router.post('/users', async (req, res) => {
       return res.status(409).json({ error: 'That email already has an account' });
     }
 
+    // must_change_password: the admin chose this password and has to communicate it
+    // to the officer, so it is known to at least two people before first use. The
+    // account cannot do anything until the officer replaces it.
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
     const result = db.prepare(
-      "INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, 'officer')"
+      "INSERT INTO users (name, email, password_hash, role, must_change_password) VALUES (?, ?, ?, 'officer', 1)"
     ).run(name, email, password_hash);
 
     res.status(201).json({ user: { id: result.lastInsertRowid, name, email, role: 'officer' } });

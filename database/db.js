@@ -10,6 +10,7 @@ const { DatabaseSync } = require('node:sqlite');
 // ALTER TABLE in every version, so these are declared plainly here and the CHECK
 // constraints live in schema.sql for databases created fresh.
 const MIGRATIONS = [
+  ['users', 'must_change_password', 'INTEGER NOT NULL DEFAULT 0'],
   ['reports', 'reporter_relationship', 'TEXT'],
   ['reports', 'reporter_verdict', 'TEXT'],
   ['reports', 'reporter_verdict_note', 'TEXT'],

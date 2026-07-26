@@ -18,6 +18,12 @@ app.use(session({
 
 app.use('/api/stats', require('./routes/stats'));
 app.use('/api/auth', require('./routes/auth'));
+
+// Everything below this line is unreachable while an account still holds a password
+// someone else set. /api/auth is above it so the holder can still read their own
+// account, change the password, and log out.
+app.use(require('./middleware/auth').enforcePasswordChange);
+
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/cases', require('./routes/cases'));
 app.use('/api/officer', require('./routes/officer'));

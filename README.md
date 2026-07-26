@@ -234,6 +234,7 @@ reporters, no locations, no emails. There is a test asserting exactly that.
 - Download a per-case PDF summary; view uploaded evidence
 
 **Officers**
+- Forced to replace the admin-issued password at first sign-in; the account is inert until they do
 - Full case queue with status/type/date filters and clickable status tiles
 - Move a case forward; record and revise resolution notes
 - Read the complete trail of any case
@@ -274,6 +275,9 @@ These are behaviours with tests attached, not aspirations.
    its owner while signed in.
 6. **No HTTP endpoint can create an administrator.** See
    [ARCHITECTURE.md](ARCHITECTURE.md#account-provisioning).
+7. **A password somebody else chose cannot be used.** An officer provisioned by an
+   admin must set their own before the account does anything — enforced server-side,
+   not by a prompt the browser draws.
 
 ---
 

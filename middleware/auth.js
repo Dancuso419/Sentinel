@@ -24,4 +24,28 @@ function requireRole(...roles) {
   };
 }
 
-module.exports = { requireAuth, requireRole };
+// Blocks an account that is still on a password somebody else chose.
+//
+// Mounted in server.js above every router except /api/auth and /api/stats, rather
+// than left to the front end: a prompt the browser draws is bypassed by calling the
+// API directly, so the account has to be genuinely unusable, not merely awkward.
+//
+// /api/auth stays reachable so the holder can read /me, change the password, and
+// log out — the three things they must be able to do.
+function enforcePasswordChange(req, res, next) {
+  const sessionUser = req.session.user;
+  // No session: let the route's own requireAuth decide. This middleware sits above
+  // public routes too, and must not turn an anonymous request into a 403.
+  if (!sessionUser) return next();
+
+  const db = req.app.locals.db;
+  const user = db.prepare('SELECT must_change_password FROM users WHERE id = ?').get(sessionUser.id);
+  if (!user || !user.must_change_password) return next();
+
+  res.status(403).json({
+    error: 'Set your own password before using this account',
+    code: 'PASSWORD_CHANGE_REQUIRED'
+  });
+}
+
+module.exports = { requireAuth, requireRole, enforcePasswordChange };

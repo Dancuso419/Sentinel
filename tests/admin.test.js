@@ -250,3 +250,52 @@ test('rejects non-boolean is_active', async () => {
   const res = await admin.patch(`/api/admin/users/${officerId}/active`).send({ is_active: 'yes' });
   expect(res.status).toBe(400);
 });
+
+test('an admin-created officer must set their own password before the account works', async () => {
+  const app = buildApp();
+  // This suite mounts only auth + reports + admin, so build a full app to exercise
+  // the middleware the way server.js wires it.
+  const full = express();
+  full.use(express.json());
+  full.use(session({ secret: 'test', resave: false, saveUninitialized: false }));
+  full.locals.db = app.locals.db;
+  full.use('/api/auth', require('../routes/auth'));
+  full.use(require('../middleware/auth').enforcePasswordChange);
+  full.use('/api/officer', require('../routes/officer'));
+  full.use('/api/admin', require('../routes/admin'));
+
+  const admin = request.agent(full);
+  await registerAndLogin(full, admin, { email: 'admin@example.com', role: 'admin' });
+  await admin.post('/api/admin/users')
+    .send({ name: 'Officer New', email: 'new@example.com', password: 'Handed0ver!' });
+
+  const officer = request.agent(full);
+  const login = await officer.post('/api/auth/login')
+    .send({ email: 'new@example.com', password: 'Handed0ver!' });
+  expect(login.status).toBe(200);
+  expect(login.body.user.must_change_password).toBe(true);
+
+  // Signed in, but the account does nothing until the password is replaced.
+  const blocked = await officer.get('/api/officer/reports');
+  expect(blocked.status).toBe(403);
+  expect(blocked.body.code).toBe('PASSWORD_CHANGE_REQUIRED');
+
+  // The three things they must still be able to do all work.
+  expect((await officer.get('/api/auth/me')).status).toBe(200);
+  expect((await officer.get('/api/auth/me')).body.user.must_change_password).toBe(true);
+
+  const changed = await officer.patch('/api/auth/password')
+    .send({ current_password: 'Handed0ver!', new_password: 'MyOwnPassw0rd' });
+  expect(changed.status).toBe(200);
+
+  // Unblocked, with no re-login needed.
+  expect((await officer.get('/api/officer/reports')).status).toBe(200);
+  expect((await officer.get('/api/auth/me')).body.user.must_change_password).toBe(false);
+});
+
+test('a self-registered citizen is never forced to change password', async () => {
+  const app = buildApp();
+  const citizen = request.agent(app);
+  const login = await registerAndLogin(app, citizen);
+  expect(login.body.user.must_change_password).toBe(false);
+});

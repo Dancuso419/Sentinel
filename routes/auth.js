@@ -61,7 +61,11 @@ router.post('/login', async (req, res) => {
     if (!user.is_active) return res.status(403).json({ error: 'Account is deactivated' });
 
     req.session.user = { id: user.id, name: user.name, email: user.email, role: user.role };
-    res.json({ user: req.session.user });
+    // Sent alongside the session so the browser can route a first-time officer
+    // straight to the account page rather than bouncing them off a 403.
+    res.json({
+      user: { ...req.session.user, must_change_password: Boolean(user.must_change_password) }
+    });
   } catch (err) {
     console.error('POST /api/auth/login failed:', err);
     res.status(500).json({ error: 'Internal server error' });
@@ -78,11 +82,11 @@ router.post('/logout', (req, res) => {
 router.get('/me', requireAuth, (req, res) => {
   const db = req.app.locals.db;
   const user = db.prepare(
-    'SELECT id, name, email, role, created_at FROM users WHERE id = ?'
+    'SELECT id, name, email, role, created_at, must_change_password FROM users WHERE id = ?'
   ).get(req.session.user.id);
 
   if (!user) return res.status(401).json({ error: 'Not authenticated' });
-  res.json({ user });
+  res.json({ user: { ...user, must_change_password: Boolean(user.must_change_password) } });
 });
 
 // Changing your own password. Distinct from the "password reset" PRODUCT.md puts
@@ -110,8 +114,12 @@ router.patch('/password', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'New password must be different from the current one' });
     }
 
+    // Clearing must_change_password here is the only thing that lifts the block in
+    // middleware/auth.js — the account becomes usable at the moment its holder is
+    // the only person who knows the password.
     const password_hash = await bcrypt.hash(new_password, SALT_ROUNDS);
-    db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(password_hash, user.id);
+    db.prepare('UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?')
+      .run(password_hash, user.id);
 
     res.json({ ok: true });
   } catch (err) {

@@ -47,6 +47,11 @@ work the case queue — the queue tells her so when she does.
 That is intentional: it demonstrates account control, and that a deactivated officer's
 past work is still on the standings board.
 
+**The seeded officers above are not prompted to change their password.** The
+first-login requirement applies to accounts an admin provisions, where the password
+was chosen by someone else; seeded demo accounts would only break the walkthrough. To
+see it, create an officer from the admin page and sign in as them — see step 5 below.
+
 ### Citizens — 5
 
 | Email | Name | Notable |
@@ -143,7 +148,12 @@ Sign in as `admin@example.com`.
 - Headcounts, then **Where the case load sits** — the bars are real proportions.
 - **Sign-off queue**: three disputed cases first, then resolutions nobody answered.
   Sign one off and watch the queue and the counts update together.
-- **Add an officer**: create one, then sign in as them in a private window.
+- **Add an officer**: create one with any starting password, then sign in as them in a
+  private window. You will be sent straight to the account page and told to set your
+  own password — the queue, the standings and everything else stay closed until you
+  do. That is enforced on the server, so it holds even if you go to
+  `officer-dashboard.html` directly. Set a password and the dashboard opens on the
+  same session, no second sign-in.
 - **Citizen accounts**: names, emails, join dates — and deliberately **no report
   counts**, because an admin can already read the whole queue and a per-person count
   would let an anonymous report be traced back to a person.

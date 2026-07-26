@@ -21,6 +21,13 @@ loginForm.addEventListener('submit', async (e) => {
       email: data.get('email'),
       password: data.get('password')
     });
+    // An account still holding a password somebody else chose cannot reach its
+    // dashboard at all, so send it somewhere useful rather than into a 403.
+    if (user.must_change_password) {
+      window.location.href = 'account.html?first=1';
+      return;
+    }
+
     const destinations = {
       citizen: 'citizen-dashboard.html',
       officer: 'officer-dashboard.html',

@@ -5,6 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('citizen','officer','admin')),
   is_active INTEGER NOT NULL DEFAULT 1,
+  -- Set when an account is created with a password somebody else chose. An admin
+  -- provisioning an officer types that password and reads it out, so it is shared
+  -- before it has ever been used; the account is unusable until it is replaced.
+  must_change_password INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

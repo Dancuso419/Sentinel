@@ -74,6 +74,13 @@ the named filer described the same event. Documented as future work.
 
 **Confirmed functionality:** role-based auth (citizen/officer/admin) with sessions; citizen and anonymous walk-in report submission with evidence upload; edit/withdraw while pending; public track-by-case-ID; citizen dashboard; officer list with status/type/date filtering, status updates, resolution notes, and status history; admin analytics (by type, status, date), officer and citizen account rosters, officer account provisioning and activation; per-user account page with self-service password change; single-case PDF export; on-screen banner when a citizen's report status changes.
 
+**A password chosen by someone else cannot be used.** An officer provisioned by an
+admin holds a password that admin typed and had to communicate, so it is known to two
+people before first use. `must_change_password` makes the account inert — every route
+except `/api/auth` returns 403 — until the officer sets their own. Enforced in
+middleware rather than by a prompt, because a prompt is bypassed by calling the API
+directly. Seeded demo officers are exempt so the walkthrough is not blocked.
+
 **Account provisioning.** Three tiers, each with a different credential:
 
 | Account | Created by | Credential required |

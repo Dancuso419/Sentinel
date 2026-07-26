@@ -16,6 +16,10 @@ const message = document.getElementById('password-message');
 
 // Named distinctly from rail.js's loadAccount(), which fills the sidebar chip. Two
 // same-named function declarations would silently overwrite each other.
+// Tracked so the success message can tell a first-time officer that the rest of the
+// system has just opened up, rather than only that the password changed.
+let mustChangePassword = false;
+
 async function loadAccountPage() {
   const { user } = await apiRequest('GET', '/api/auth/me');
   document.getElementById('account-initials').textContent = initials(user.name);
@@ -24,6 +28,15 @@ async function loadAccountPage() {
   document.getElementById('account-role').textContent = ROLE_LABEL[user.role] || user.role;
   document.getElementById('account-created').textContent = String(user.created_at || '').slice(0, 10);
   document.getElementById('account-scope').textContent = ROLE_SCOPE[user.role] || '';
+
+  // Driven by the server's own flag, never by the ?first=1 in the URL — that is a
+  // hint for the first paint, not something to trust.
+  mustChangePassword = Boolean(user.must_change_password);
+  document.getElementById('first-run').hidden = !mustChangePassword;
+
+  if (mustChangePassword) {
+    document.getElementById('password-form').elements.current_password.focus();
+  }
 }
 
 form.addEventListener('submit', async (e) => {
@@ -56,6 +69,22 @@ form.addEventListener('submit', async (e) => {
   try {
     await apiRequest('PATCH', '/api/auth/password', { current_password, new_password });
     form.reset();
+
+    if (mustChangePassword) {
+      // The block just lifted. Say so, and take them where they were going.
+      message.innerHTML = 'Password set. Your account is now active — taking you to your dashboard…';
+      message.className = 'msg success';
+      await loadAccountPage();
+      const { user } = await apiRequest('GET', '/api/auth/me');
+      const home = {
+        citizen: 'citizen-dashboard.html',
+        officer: 'officer-dashboard.html',
+        admin: 'admin-dashboard.html'
+      }[user.role] || 'index.html';
+      setTimeout(() => { window.location.href = home; }, 1200);
+      return;
+    }
+
     message.textContent = 'Password updated. Use the new one next time you sign in.';
     message.className = 'msg success';
   } catch (err) {
