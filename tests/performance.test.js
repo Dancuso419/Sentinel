@@ -166,10 +166,101 @@ test('revised resolution notes are surfaced per officer', async () => {
   expect(find(res.body, 'Officer Bello').note_revisions).toBe(1);
 });
 
-test('citizens cannot read officer standings', async () => {
+test('citizens cannot read the internal officer standings', async () => {
   const app = buildApp();
   const citizen = request.agent(app);
   await registerAndLogin(app, citizen);
   expect((await citizen.get('/api/officer/performance')).status).toBe(403);
   expect((await request(app).get('/api/officer/performance')).status).toBe(401);
+});
+
+describe('public standings on the landing page', () => {
+  function publicApp() {
+    const app = buildApp();
+    app.use('/api/stats', require('../routes/stats'));
+    return app;
+  }
+
+  test('are readable with no session at all', async () => {
+    const app = publicApp();
+    const officer = request.agent(app);
+    await registerAndLogin(app, officer, {
+      name: 'Officer Bello', email: 'bello@example.com', role: 'officer'
+    });
+    const c = await walkIn(app);
+    await closeCase(app, officer, c);
+
+    const res = await request(app).get('/api/stats/standings');
+    expect(res.status).toBe(200);
+    expect(find(res.body, 'Officer Bello').resolved).toBe(1);
+  });
+
+  test('publish disputes alongside resolutions, never resolutions alone', async () => {
+    const app = publicApp();
+    const officer = request.agent(app);
+    await registerAndLogin(app, officer, {
+      name: 'Officer Bello', email: 'bello@example.com', role: 'officer'
+    });
+    const c = await walkIn(app);
+    await closeCase(app, officer, c);
+    await request(app).post(`/api/cases/${c}/verify`).send({ verdict: 'disputed' });
+
+    // Hiding disputes here would turn the public board back into a volume ranking,
+    // which is the incentive the whole measure exists to avoid.
+    const res = await request(app).get('/api/stats/standings');
+    const row = find(res.body, 'Officer Bello');
+    expect(row.resolved).toBe(1);
+    expect(row.disputed).toBe(1);
+    expect(row.score).toBe(0);
+  });
+
+  test('withhold personnel detail that is not the public\'s business', async () => {
+    const app = publicApp();
+    const db = app.locals.db;
+
+    const officer = request.agent(app);
+    await registerAndLogin(app, officer, {
+      name: 'Officer Bello', email: 'bello@example.com', role: 'officer'
+    });
+    const c = await walkIn(app);
+    await closeCase(app, officer, c, 'First account.');
+    await officer.patch(`/api/officer/reports/${c}/status`)
+      .send({ status: 'resolved', resolution_note: 'Revised account.' });
+
+    createUserDirectly(db, {
+      name: 'Officer Gone', email: 'gone@example.com', password: 'secret123',
+      role: 'officer', is_active: 0
+    });
+
+    const res = await request(app).get('/api/stats/standings');
+    const row = find(res.body, 'Officer Bello');
+
+    // A note revision is an internal oversight signal; without the case context it
+    // reads as an accusation.
+    expect(row.note_revisions).toBeUndefined();
+    // Internal row ids are not public.
+    expect(row.id).toBeUndefined();
+    // A deactivated officer's absence is an employment matter, not a performance one.
+    expect(find(res.body, 'Officer Gone')).toBeUndefined();
+
+    // The internal board still has all of it.
+    const internal = await officer.get('/api/officer/performance');
+    expect(find(internal.body, 'Officer Bello').note_revisions).toBe(1);
+    expect(find(internal.body, 'Officer Gone')).toBeTruthy();
+  });
+
+  test('carry no citizen or case data', async () => {
+    const app = publicApp();
+    const officer = request.agent(app);
+    await registerAndLogin(app, officer, {
+      name: 'Officer Bello', email: 'bello@example.com', role: 'officer'
+    });
+    const c = await walkIn(app);
+    await closeCase(app, officer, c);
+
+    const raw = JSON.stringify((await request(app).get('/api/stats/standings')).body);
+    expect(raw).not.toMatch(/CR-\d{4}-\d{4}/);
+    expect(raw).not.toMatch(/Main Market/);
+    expect(raw).not.toMatch(/@example\.com/);
+  });
 });

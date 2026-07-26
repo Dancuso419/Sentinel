@@ -96,6 +96,10 @@ Open `http://localhost:3000`.
 - The five tiles read live from the database. They are not hard-coded.
 - Scroll to **Try it — track a case** and enter `CR-2026-0013`. The trail fills in and
   names the officer who handled it. That is a real query, not a mock.
+- Keep scrolling to **Who is working these cases** — the officer standings, public and
+  with no login. Adaeze leads on 10 closures to Bello's 8, but they are level on score
+  because two of hers were disputed. Officer Nwosu is absent: deactivated officers are
+  withheld from the public board.
 - Click **Report an incident**. Note the *"Were you the one affected?"* question — the
   answer decides how much your later confirmation is worth.
 - Submit it. The case ID appears **once**, in black, with a copy button.

@@ -1,4 +1,5 @@
 const express = require('express');
+const { officerLeaderboard } = require('../lib/officerStats');
 
 const router = express.Router();
 
@@ -42,6 +43,23 @@ router.get('/', (req, res) => {
     });
   } catch (err) {
     console.error('Stats error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Public officer standings, shown on the landing page.
+//
+// This is the one endpoint in the system that publishes staff names alongside a
+// performance measure, and it does so deliberately: a citizen deciding whether to
+// report at all is entitled to see whether resolutions here hold up. It carries no
+// citizen data of any kind — no case IDs, no reporters, no locations.
+//
+// See officerLeaderboard's publicView note for what is withheld and why.
+router.get('/standings', (req, res) => {
+  try {
+    res.json(officerLeaderboard(req.app.locals.db, { publicView: true }));
+  } catch (err) {
+    console.error('GET /api/stats/standings failed:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

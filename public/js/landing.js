@@ -49,6 +49,58 @@ async function loadStats() {
   }
 }
 
+/* ---------- officer standings -------------------------------------------- */
+
+// Deliberately shows disputes with the same weight as resolutions. Publishing one
+// without the other would make this a volume board, which is the thing the measure
+// exists to avoid.
+function standingsRow(o, i) {
+  const place = o.rank === null ? '—' : o.rank;
+  const quality = o.resolved
+    ? `${o.confirmed} confirmed · ${o.disputed} disputed`
+    : 'No closures yet';
+
+  return `
+    <li class="standing${i === 0 ? ' is-lead' : ''}">
+      <span class="standing-rank">${place}</span>
+      <span class="standing-body">
+        <span class="standing-name">${escapeHtml(o.name)}</span>
+        <span class="standing-note">${quality}</span>
+      </span>
+      <span class="standing-figures">
+        <span class="standing-stat">
+          <span class="standing-value">${o.resolved}</span>
+          <span class="standing-label">closed</span>
+        </span>
+        <span class="standing-stat">
+          <span class="standing-value">${o.avg_days_to_resolve === null ? '—' : `${o.avg_days_to_resolve}d`}</span>
+          <span class="standing-label">avg</span>
+        </span>
+        <span class="standing-stat is-score">
+          <span class="standing-value">${o.score}</span>
+          <span class="standing-label">score</span>
+        </span>
+      </span>
+    </li>`;
+}
+
+async function loadStandings() {
+  const board = document.getElementById('standings-board');
+  try {
+    const { officers } = await apiRequest('GET', '/api/stats/standings');
+    const ranked = officers.filter((o) => o.rank !== null);
+
+    if (!ranked.length) {
+      board.innerHTML = '<p class="muted">No case work has been recorded yet.</p>';
+      return;
+    }
+
+    board.innerHTML = `<ol class="standing-list">${ranked.map(standingsRow).join('')}</ol>`;
+  } catch {
+    board.innerHTML = '<p class="muted">The board could not be read right now.</p>';
+  }
+}
+
 /* ---------- inline tracker ----------------------------------------------- */
 
 function renderTrail(status) {
@@ -116,3 +168,4 @@ form.addEventListener('submit', async (e) => {
 });
 
 loadStats();
+loadStandings();

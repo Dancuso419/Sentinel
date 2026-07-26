@@ -190,6 +190,28 @@ A deactivated officer keeps their record — withdrawing access does not erase w
 already done. The board is visible to officers as well as admins: a performance
 measure people are ranked by but cannot see is worse than no measure at all.
 
+### The board is public
+
+A summary of the standings sits on the landing page, readable with no account. The
+reasoning: someone deciding whether to report a crime at all is entitled to see
+whether resolutions here hold up.
+
+That is a real exposure decision, so what it does and does not publish is deliberate:
+
+**Published** — officer name, cases picked up, cases closed, confirmed, **disputed**,
+average days to close, and score. Disputes are published *because* resolutions are.
+Showing closures while hiding rejections would turn the public board into a volume
+ranking, which is precisely the incentive this measure exists to avoid — a sanitised
+board would be worse than either publishing all of it or none of it.
+
+**Withheld** — deactivated officers, whose absence is an employment matter rather
+than a performance one, and the note-revision count, an internal oversight signal
+that reads as an accusation without the case context an officer or admin has. Both
+remain on the internal board at `/performance.html`.
+
+The public endpoint carries no citizen or case data of any kind — no case IDs, no
+reporters, no locations, no emails. There is a test asserting exactly that.
+
 ---
 
 ## Everything the system does
@@ -200,6 +222,7 @@ measure people are ranked by but cannot see is worse than no measure at all.
 - Track any case by ID: status, incident type, dates, handling officer, resolution note
 - Confirm or dispute the resolution of a walk-in case
 - Live system status on the landing page, read from the database
+- Officer standings on the landing page, including disputed counts
 
 **Citizens**
 - Register, sign in, change password

@@ -63,7 +63,7 @@ routes/                One router per resource, mounted under /api
   cases.js             citizen's own cases, public lookup, reporter verdict
   officer.js           queue, filters, status changes, trail, standings
   admin.js             analytics, sign-off queue, rosters, officer provisioning
-  stats.js             public aggregate counts for the landing page
+  stats.js             public: aggregate counts and officer standings (landing page)
 
 lib/                   Logic that must not differ between callers
   caseTrail.js         Writes and reads the case-event log; resolves actor names
@@ -145,6 +145,13 @@ changes hands; the log is the record of truth.
 
 **Officer standings** are computed per request from the same log. There is no score
 column to fall out of date, and no recalculation job.
+
+`officerLeaderboard(db, { publicView })` serves both the internal board
+(`GET /api/officer/performance`, officers and admins) and the public one
+(`GET /api/stats/standings`, no session). One function rather than two so the
+ranking can never differ between them — only the columns do. The public view drops
+deactivated officers and the note-revision count; it keeps disputes, because a board
+showing closures without rejections would be a volume ranking.
 
 ### Migrations
 

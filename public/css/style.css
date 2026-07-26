@@ -1145,6 +1145,66 @@ tr[hidden] { display: none; }
 
 .analytics-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-md); }
 
+/* ---------- landing: public standings ------------------------------------ */
+
+.standings-board { margin-top: var(--s-lg); }
+
+.standing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-rest);
+  counter-reset: standing;
+}
+
+.standing {
+  display: flex;
+  align-items: center;
+  gap: var(--s-md);
+  padding: 18px var(--s-lg);
+  background: var(--surface);
+}
+
+/* Top of the board takes the ink fill — the one emphasis element in this band. */
+.standing.is-lead { background: var(--ink); color: var(--on-ink); }
+.standing.is-lead .standing-note,
+.standing.is-lead .standing-label { color: rgba(255, 255, 255, .62); }
+.standing.is-lead .standing-rank { background: var(--on-ink); color: var(--ink); }
+
+.standing-rank {
+  display: grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 500;
+}
+
+.standing-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.standing-name { font-size: var(--t-base); font-weight: 500; letter-spacing: -.015em; }
+.standing-note { font-size: var(--t-small); color: var(--ink-mute); }
+
+.standing-figures { display: flex; gap: var(--s-lg); flex: none; }
+.standing-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.standing-value { font-family: var(--font-mono); font-size: var(--t-base); font-weight: 500; font-variant-numeric: tabular-nums; }
+.standing-label { font-size: var(--t-micro); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); }
+.standing-stat.is-score .standing-value { font-size: var(--t-lead); }
+
+@media (max-width: 620px) {
+  .standing { flex-wrap: wrap; gap: var(--s-sm) var(--s-md); padding: var(--s-md); }
+  .standing-body { flex: 1 1 60%; }
+  .standing-figures { width: 100%; justify-content: space-between; gap: var(--s-md); padding-left: 46px; }
+  .standing-stat { align-items: flex-start; }
+}
+
 /* ---------- officer standings -------------------------------------------- */
 
 .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-md); }
