@@ -2,7 +2,9 @@
 // one line explaining what this account can do, and the dashboard link in the rail
 // (filled in by rail.js).
 
-const ROLE_LABEL = { citizen: 'Citizen', officer: 'Officer', admin: 'Administrator' };
+// ROLE_LABEL and initials() come from api.js. They must NOT be redeclared here:
+// rail.js is loaded on this page too, classic scripts share one global scope, and a
+// duplicate `const` is a SyntaxError that stops this entire file from running.
 const ROLE_SCOPE = {
   citizen: 'This account can file reports, and correct or withdraw them while they are still pending.',
   officer: 'This account can read every report in the queue and move cases through the workflow. Status changes are recorded against it by name.',
@@ -12,14 +14,9 @@ const ROLE_SCOPE = {
 const form = document.getElementById('password-form');
 const message = document.getElementById('password-message');
 
-function initials(name) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
-async function loadAccount() {
+// Named distinctly from rail.js's loadAccount(), which fills the sidebar chip. Two
+// same-named function declarations would silently overwrite each other.
+async function loadAccountPage() {
   const { user } = await apiRequest('GET', '/api/auth/me');
   document.getElementById('account-initials').textContent = initials(user.name);
   document.getElementById('account-name').textContent = user.name;
@@ -75,6 +72,6 @@ document.getElementById('logout-btn').addEventListener('click', async () => {
   window.location.href = 'login.html';
 });
 
-loadAccount().catch(() => {
+loadAccountPage().catch(() => {
   window.location.href = 'login.html';
 });

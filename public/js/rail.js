@@ -7,8 +7,8 @@
 // Below 860px the rail is a bottom bar and retracting is meaningless, so the toggle
 // is hidden by CSS and the class has no layout effect.
 
+// ROLE_LABEL and initials() come from api.js, which every page loads first.
 const RAIL_KEY = 'sentinel.rail';
-const ROLE_LABEL = { citizen: 'Citizen', officer: 'Officer', admin: 'Administrator' };
 const ROLE_HOME = {
   citizen: 'citizen-dashboard.html',
   officer: 'officer-dashboard.html',
@@ -89,13 +89,6 @@ if (sectionLinks.length) {
 }
 
 /* ---------- signed-in account ------------------------------------------- */
-
-function initials(name) {
-  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 // Deliberately non-fatal. Each dashboard already redirects to login when its own
 // data call 401s; if this one fails too, letting it redirect as well would race
