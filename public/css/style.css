@@ -217,7 +217,7 @@ img, svg { display: block; max-width: 100%; }
 /* padding-inline, not the padding shorthand: .hero / .band / .task-page are applied
    to the same element as .container and set block padding. A shorthand on either
    side would silently zero the other. */
-.container { max-width: 1180px; margin: 0 auto; padding-inline: var(--s-lg); }
+.container { max-width: 1180px; margin: 0 auto; padding-inline: var(--s-lg); --pad-x: var(--s-lg); }
 .container-narrow { max-width: 560px; }
 
 .site-footer {
@@ -574,8 +574,10 @@ form .btn-submit { width: 100%; margin-top: var(--s-xs); }
 table { width: 100%; border-collapse: collapse; min-width: 660px; }
 
 /* The officer queue carries inline controls in one cell, so it needs real width
-   before columns start crushing. It scrolls inside .table-wrap rather than
-   collapsing into cards — an officer reading a queue wants the columns aligned. */
+   before columns start crushing. Down to 620px it scrolls inside .table-wrap rather
+   than collapsing — an officer reading a queue wants the columns aligned, and that
+   is worth a sideways pan. Below 620px that trade stops paying and the rows become
+   cards instead; see the narrow-viewport block at the end of this file. */
 .table-wide table { min-width: 1120px; }
 
 thead th {
@@ -1318,8 +1320,14 @@ tr.is-muted-row td { color: var(--ink-mute); }
   /* the rail becomes a bottom bar — never a hamburger.
      Retracting is meaningless here, so the toggle goes away and .rail-open is
      neutralised rather than left to fight the bottom-bar layout. */
+  /* max(), not a bare gutter: the bar is the primary navigation and it sits exactly
+     where the iPhone home indicator and Android gesture pill live. Without the
+     inset the last row of the queue hides behind the system chrome. */
   .rail, .rail-open .rail {
-    top: auto; left: var(--s-md); right: var(--s-md); bottom: var(--s-md);
+    top: auto;
+    left: max(var(--s-md), env(safe-area-inset-left));
+    right: max(var(--s-md), env(safe-area-inset-right));
+    bottom: max(var(--s-md), env(safe-area-inset-bottom));
     width: auto;
     flex-direction: row;
     justify-content: space-around;
@@ -1335,14 +1343,18 @@ tr.is-muted-row td { color: var(--ink-mute); }
   .rail-toggle { display: none; }
   .rail-open .rail-link { width: 44px; justify-content: center; padding: 0; }
   .rail-open .rail-label { display: none; }
-  .app-main, .rail-open .app-main { margin-left: 0; padding-bottom: 112px; transition: none; }
+  .app-main, .rail-open .app-main {
+    margin-left: 0;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+    transition: none;
+  }
 }
 
 @media (max-width: 620px) {
   .paths { grid-template-columns: minmax(0, 1fr); }
-  .site-header { padding: var(--s-md) var(--s-md) 0; }
-  .container { padding-inline: var(--s-md); }
-  .app-main { padding: var(--s-md) var(--s-md) 112px; }
+  .site-header { padding: var(--s-md) var(--s-md) 0; --pad-x: var(--s-md); }
+  .container { padding-inline: var(--s-md); --pad-x: var(--s-md); }
+  .app-main { padding: var(--s-md) var(--s-md) calc(112px + env(safe-area-inset-bottom)); --pad-x: var(--s-md); }
   .card, .task-card { padding: var(--s-md); }
   .closing { padding: var(--s-xl) var(--s-md); }
   .site-nav a { padding: 8px 11px; }
@@ -1350,11 +1362,184 @@ tr.is-muted-row td { color: var(--ink-mute); }
 }
 
 @media (max-width: 560px) {
-  .tile-row { grid-template-columns: minmax(0, 1fr); }
   .detail-row > td { padding: var(--s-md); }
   .demo-meta { gap: var(--s-md); }
   .tile { min-height: 0; }
   .trail-track { flex-wrap: wrap; gap: 10px; }
   .trail-line { display: none; }
   .trail-node { flex: 1 1 100%; }
+}
+
+/* Tiles stay paired rather than going 1-up at 560: on the officer queue the four
+   status tiles ARE the filter control, and stacking them puts three screens of
+   scrolling between the officer and the queue they filter. With min-height released
+   above, a pair holds its figure and label down to the narrowest phones in use. */
+@media (max-width: 360px) {
+  .tile-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- safe areas --------------------------------------------------- */
+
+/* Every page sets viewport-fit=cover so the bottom bar can sit under the home
+   indicator instead of floating above a dead strip. The cost of that opt-in is that
+   the browser stops padding the viewport around a notch for us, so anything at a
+   horizontal edge has to claim the inset itself — otherwise a phone held in
+   landscape puts the nav and the leftmost table cells under the camera cutout.
+
+   Deliberately last in the file, and driven by --pad-x rather than a fixed value:
+   this has to outrank every breakpoint above without freezing the gutter each one
+   sets. On a device with no cutout every inset is 0 and max() returns --pad-x, so
+   nothing here changes the desktop layout. */
+.site-header, .site-footer, .container, .app-main {
+  padding-left: max(var(--pad-x, var(--s-lg)), env(safe-area-inset-left));
+  padding-right: max(var(--pad-x, var(--s-lg)), env(safe-area-inset-right));
+}
+
+/* ---------- touch input -------------------------------------------------- */
+
+/* Keyed to the pointer, not the viewport: a 1024px tablet is still a thumb, and a
+   narrow desktop window is still a mouse. Sizing off width would grow controls for
+   people who don't need it and leave them small for people who do. */
+@media (pointer: coarse) {
+  /* 16px is not a taste call. iOS Safari zooms the whole viewport when a control
+     with smaller text takes focus, and it does not zoom back out — so every form on
+     this site currently leaves a phone user pinching to escape their own typing.
+     The body ramp is 15px and the filter and row controls are 13px, so every one of
+     them tripped it. Text elsewhere is untouched; this is only the input floor. */
+  input, select, textarea,
+  .filter-bar input, .filter-bar select,
+  .row-update select, .row-update .note-input,
+  .review-card .review-note {
+    font-size: 16px;
+  }
+
+  /* 44px is the smallest target a thumb hits reliably. These four are all well under
+     it because they were sized for a cursor. */
+  .site-nav a, .btn-ghost, .btn-sm, .site-footer nav a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .filter-bar input, .filter-bar select, .row-update select, .row-update .note-input {
+    min-height: 44px;
+  }
+
+  .password-toggle { width: 44px; height: 44px; right: 3px; }
+  .password-field input { padding-right: 52px; }
+
+  /* A checkbox or radio at its native size inside a full-width row is a small target
+     in a large one — the row is already the label, so the control grows with it. */
+  .field-checkbox input, .choice input { width: 20px; height: 20px; margin-top: 1px; }
+
+  /* Hover is the only thing revealing these, and there is no hover here. The rail
+     tooltip is already suppressed in the bottom bar; the card lifts are just motion
+     that fires on tap and sticks. */
+  .path:hover, a.tile-plain:hover, button.tile:hover { transform: none; }
+}
+
+/* ---------- narrow viewports: rows become cards -------------------------- */
+
+/* Below this width eight columns (officer queue) or ten (standings) cannot hold
+   their alignment, and panning sideways to reach a status control is not a queue
+   anyone can work. Each row becomes a card that names its own fields: same cells,
+   same order, same controls, only the axis changes. Nothing is dropped — a column
+   hidden on mobile is a fact an officer would have to go to a desk to learn. */
+@media (max-width: 620px) {
+  /* The wrapper's paper moves onto the individual cards, so the scroll container
+     stops being a box and becomes just a list. */
+  .table-wrap {
+    overflow-x: visible;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  table, .table-wide table { min-width: 0; display: block; }
+
+  /* Out of flow rather than display:none — the headers are still the accessible
+     column names, and ::before is only quoting them visually. */
+  thead {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+  }
+
+  tbody { display: flex; flex-direction: column; gap: var(--s-md); }
+
+  tbody tr {
+    display: block;
+    padding: var(--s-xs) var(--s-md);
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-rest);
+  }
+  /* A row tint that read as "hovered" in a table reads as "selected" on a card,
+     and no device this block targets has a pointer to hover with. */
+  tbody tr:hover { background: var(--surface); }
+
+  tbody td {
+    display: grid;
+    grid-template-columns: minmax(0, 34%) minmax(0, 1fr);
+    gap: var(--s-md);
+    align-items: baseline;
+    padding: 11px 0;
+    border-bottom: 0;
+  }
+  /* Dividers hang off the following cell, so the last one in a card needs no
+     special case and cannot fight the table's own :last-child rules. */
+  tbody td + td { border-top: 1px solid var(--hairline); }
+
+  tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: var(--t-micro);
+    font-weight: 500;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  /* Cells that own no column — the trail panel, the empty state, and the actions
+     columns whose header is only a spacer — take the full width. */
+  tbody td:not([data-label]), tbody td[data-label=''] { display: block; }
+
+  /* Control groups sit full-width under their label instead of inside a 34% value
+     column: a select and a note field squeezed into 200px are targets you miss.
+     data-cell is set by js/table-cards.js — see the note there on why not :has(). */
+  tbody td[data-cell='block'] { display: block; }
+  tbody td[data-cell='block']::before { display: block; margin-bottom: var(--s-sm); }
+  .row-update { gap: var(--s-sm); }
+  .row-update select, .row-update .note-input { width: 100%; flex: 1 1 100%; min-width: 0; }
+  .row-update .save-btn { width: 100%; }
+  .row-msg { max-width: none; }
+  .cell-actions { gap: var(--s-sm); }
+  .cell-actions .btn { flex: 1 1 auto; }
+
+  /* An expandable panel belongs to the case above it. Squaring its top corners and
+     closing the gap is what says "still this case" rather than "a new one". */
+  /* The negative margin cancels the flex gap so the panel meets the card above it;
+     dropping its own top border stops that meeting point rendering as a 2px seam. */
+  tr.history-row, tr.edit-row {
+    margin-top: calc(var(--s-md) * -1);
+    border-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: var(--canvas);
+    box-shadow: none;
+  }
+  tr.history-row > td, tr.edit-row > td { padding: var(--s-md) 0; border-top: 0; }
+
+  /* And the card squares off its own bottom corners while that panel is open, so the
+     two read as one object. Cosmetic only — where :has() is missing the panel still
+     attaches, it just keeps rounded corners at the join. */
+  tbody tr:has(+ tr.history-row:not([hidden])),
+  tbody tr:has(+ tr.edit-row:not([hidden])) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .detail-row > td { background: none; }
+  .table-empty { padding: var(--s-xl) var(--s-md); }
 }
