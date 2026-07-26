@@ -52,6 +52,13 @@
   --danger-tile-hover: #F2D0CD;
 
   /* --- type ramp --- */
+  /* One step below micro, and the only fluid step in the ramp. It exists for a single
+     role: the name under an icon in the mobile tab bar, which is the smallest text in
+     the product. Six items on a 320px screen give each label ~46px, and "Standings"
+     does not fit that at micro's 11px — it truncated mid-word. Fluid rather than two
+     fixed sizes at a breakpoint, so the ramp grows by one step instead of two and the
+     bar has no width at which its labels are clipped. */
+  --t-nano: clamp(.5625rem, 2.7vw, .625rem);
   --t-micro: .6875rem;
   --t-label: .75rem;
   --t-small: .8125rem;
@@ -1336,20 +1343,72 @@ tr.is-muted-row td { color: var(--ink-mute); }
     bottom: max(var(--s-md), env(safe-area-inset-bottom));
     width: auto;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: center;
     padding: var(--s-sm);
-    gap: 4px;
+    gap: var(--s-xs);
     border-radius: var(--r-lg);
     transition: none;
   }
   .rail-head, .rail-divider { display: none; }
   .rail-spacer { margin-top: 0; }
-  .rail-account, .rail-open .rail-account { height: 44px; padding: 0; }
-  .rail-link::after { display: none; }
+  .rail-account, .rail-open .rail-account { height: auto; padding: 0; }
 
-  /* Hold the touch target. As flex children these shrink below their set width when
-     the row is full — the admin's bar was compressing every icon to 37px. */
-  .rail-link { flex: none; }
+  /* A row of unlabelled glyphs asks the reader to decode a list icon, a bar chart and
+     a magnifier every time they need to move. The tooltip that names each one on
+     desktop cannot fire on a touch screen, so on a phone the names have to be on the
+     face of the bar. This is what ::after is for here — the same attribute that fed
+     the tooltip, now set in the layout rather than floating beside it. */
+  .rail-link {
+    flex: 1 1 0;
+    min-width: 0;
+    /* Capped so a three-item bar (the account page) does not stretch each target to
+       105px and read as three buttons rather than a navigation bar. */
+    max-width: 88px;
+    width: auto;
+    height: auto;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 1px;
+    border-radius: var(--r-md);
+  }
+
+  /* The avatar is 28px against the 19px icons beside it, which made the account chip
+     the one tall item in the row and dropped its label a few pixels below every
+     other. Matching the icons puts all five names back on one line. */
+  .rail-avatar { width: 20px; height: 20px; font-size: var(--t-micro); }
+
+  .rail-link { min-height: 46px; }
+
+  /* The .rail-open path has to be spelled out: `.rail-open .rail-link::after` kills
+     the tooltip for the expanded sidebar, where the labels sit beside the icons
+     already, and it outranks a bare `.rail-link::after`. In the bottom bar there is
+     no such label, so the name has to come back. */
+  .rail-link::after,
+  .rail-open .rail-link::after {
+    content: attr(data-short);
+    position: static;
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    color: inherit;
+    font-size: var(--t-nano);
+    font-weight: 500;
+    letter-spacing: -.02em;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  /* Nothing to name, nothing to reserve space for. */
+  .rail-link:not([data-short])::after,
+  .rail-open .rail-link:not([data-short])::after { content: none; }
 
   /* The bottom bar carries navigation BETWEEN pages. The admin rail also holds four
      in-page jump links, which took it to eight items and triggered exactly that
@@ -1359,7 +1418,7 @@ tr.is-muted-row td { color: var(--ink-mute); }
      `body[data-role='admin'] .rail-admin-only { display: flex }`. */
   .rail .rail-link[href^="#"] { display: none; }
   .rail-toggle { display: none; }
-  .rail-open .rail-link { width: 44px; justify-content: center; padding: 0; }
+  .rail-open .rail-link { width: auto; justify-content: center; padding: 6px 2px; }
   .rail-open .rail-label { display: none; }
   /* Needs the full three-class path to beat `.rail-open .rail-account .rail-label`,
      which turns the name and role back on for the expanded sidebar. Without this the
@@ -1368,7 +1427,8 @@ tr.is-muted-row td { color: var(--ink-mute); }
   .rail-open .rail-account .rail-label { display: none; }
   .app-main, .rail-open .app-main {
     margin-left: 0;
-    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+    /* Clears the bar, which is taller now that each item carries a name under it. */
+    padding-bottom: calc(124px + env(safe-area-inset-bottom));
     transition: none;
   }
 }
@@ -1379,7 +1439,7 @@ tr.is-muted-row td { color: var(--ink-mute); }
      drops "Log in" onto a second row beside a vertically-centred wordmark — ragged,
      and it reads as a mistake. Stacking them is the same decision made deliberately. */
   .site-header {
-    padding: var(--s-md) var(--s-md) 0;
+    padding: calc(env(safe-area-inset-top) + var(--s-md)) var(--s-md) 0;
     --pad-x: var(--s-md);
     flex-direction: column;
     align-items: stretch;
@@ -1387,7 +1447,16 @@ tr.is-muted-row td { color: var(--ink-mute); }
   }
   .site-nav { margin-left: -11px; }
   .container { padding-inline: var(--s-md); --pad-x: var(--s-md); }
-  .app-main { padding: var(--s-md) var(--s-md) calc(112px + env(safe-area-inset-bottom)); --pad-x: var(--s-md); }
+  /* The top inset was the one missing side, and it is the side that hurts: with
+     viewport-fit=cover the browser stops reserving the status-bar strip, so a page
+     title 16px from the top edge sits under the clock on any notched phone. The
+     added 12px is not padding for its own sake either — a screen whose first pixel
+     of content is a 24px heading reads as something that failed to finish loading. */
+  .app-main {
+    padding: calc(env(safe-area-inset-top) + 28px) var(--s-md) calc(124px + env(safe-area-inset-bottom));
+    --pad-x: var(--s-md);
+  }
+  .app-head { margin-bottom: var(--s-xl); }
   .card, .task-card { padding: var(--s-md); }
   .closing { padding: var(--s-xl) var(--s-md); }
   .site-nav a { padding: 8px 11px; }
@@ -1409,7 +1478,22 @@ tr.is-muted-row td { color: var(--ink-mute); }
    above, a pair holds its figure and label down to the narrowest phones in use. */
 @media (max-width: 360px) {
   .tile-row { grid-template-columns: minmax(0, 1fr); }
+
+  /* Six items (the officer queue seen by an admin) on a 320px screen leaves 37px
+     each at the normal gutters — under the touch minimum. Reclaiming the bar's own
+     margins and gaps buys back the ~9px per item that keeps every target at 44px,
+     which matters more at this width than the air around the bar does. */
+  .rail, .rail-open .rail {
+    left: max(var(--s-sm), env(safe-area-inset-left));
+    right: max(var(--s-sm), env(safe-area-inset-right));
+    padding: 4px;
+    gap: 0;
+  }
+  /* Adjacent targets meeting edge to edge is the normal tab-bar arrangement, and at
+     this width the gap is worth more as target than as air. */
+  .rail-link { padding: 6px 0; }
 }
+
 
 /* ---------- safe areas --------------------------------------------------- */
 

@@ -104,6 +104,12 @@ typography:
     fontWeight: 500
     lineHeight: 1.3
     letterSpacing: "0.07em"
+  nano:
+    fontFamily: "Archivo, system-ui, sans-serif"
+    fontSize: "clamp(0.5625rem, 2.7vw, 0.625rem)"
+    fontWeight: 500
+    lineHeight: 1
+    letterSpacing: "-0.02em"
   identifier:
     fontFamily: "Spline Sans Mono, ui-monospace, SFMono-Regular, monospace"
     fontSize: "0.8125rem"
@@ -239,6 +245,14 @@ Status is never communicated by color alone; the label always accompanies the ti
 Scale steps are obvious, not incremental: `display` for the landing thesis, `stat` for tile numbers, `heading` for section and card titles, `body` for prose, `label` for uppercase tracked eyebrows on tiles and table headers.
 
 Tracking tightens as size grows (down to `-0.035em` at display). Body measure stays 65–75ch.
+
+`nano` is the one exception to the fixed ramp, and has exactly one use: the name under
+an icon in the mobile tab bar, the smallest text in the product. It is fluid
+(`clamp`) because six tab items on a 320px screen leave each label about 46px, where
+`micro` truncates "Standings" mid-word, while at 390px the larger end is the more
+comfortable read. Fluid keeps that as one documented step rather than two fixed sizes
+either side of a breakpoint. Do not reach for it anywhere else — text this small is
+legible only as a label attached to an icon that already carries the meaning.
 
 ## Layout
 

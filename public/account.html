@@ -22,14 +22,14 @@
     </div>
 
     <!-- href and label are filled in from the signed-in role by rail.js -->
-    <a class="rail-link" id="rail-home" href="index.html" data-label="Dashboard">
+    <a class="rail-link" id="rail-home" href="index.html" data-label="Dashboard" data-short="Dashboard">
       <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       <span class="rail-label">Dashboard</span>
     </a>
 
     <span class="rail-divider rail-spacer" aria-hidden="true"></span>
 
-    <a class="rail-link rail-account" id="rail-account" href="account.html" aria-current="page" data-label="Account">
+    <a class="rail-link rail-account" id="rail-account" href="account.html" aria-current="page" data-label="Account" data-short="Account">
       <span class="rail-avatar" data-account="initials" aria-hidden="true">··</span>
       <span class="rail-label">
         <span class="rail-account-name" data-account="name">Loading…</span>
@@ -37,7 +37,7 @@
       </span>
     </a>
 
-    <button class="rail-link" id="logout-btn" type="button" data-label="Log out">
+    <button class="rail-link" id="logout-btn" type="button" data-label="Log out" data-short="Log out">
       <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 3H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 7l3 3-3 3M15 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span class="rail-label">Log out</span>
     </button>
