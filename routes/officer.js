@@ -3,6 +3,7 @@ const path = require('path');
 const { requireRole } = require('../middleware/auth');
 const { streamCaseSummary } = require('../lib/casePdf');
 const { recordEvent, readTrail, handlingOfficer } = require('../lib/caseTrail');
+const { officerLeaderboard } = require('../lib/officerStats');
 
 const router = express.Router();
 const WORKFLOW = ['pending', 'investigating', 'resolved'];
@@ -137,6 +138,18 @@ router.get('/reports/:case_id/evidence', (req, res) => {
   res.sendFile(filePath, (err) => {
     if (err && !res.headersSent) res.status(404).json({ error: 'Evidence file not found' });
   });
+});
+
+// Officer standings. Open to officers as well as admins: this is a record of the
+// officers' own work, and a performance measure people are ranked by but cannot see
+// is worse than no measure at all. Contains no citizen data of any kind.
+router.get('/performance', (req, res) => {
+  try {
+    res.json(officerLeaderboard(req.app.locals.db));
+  } catch (err) {
+    console.error('GET /api/officer/performance failed:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.get('/reports/:case_id/history', (req, res) => {
