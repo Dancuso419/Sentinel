@@ -1,15 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Track a Case — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Track a case — Sentinel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-  <header><h1>Track a Case</h1></header>
-  <main>
-    <form id="track-form">
-      <input name="case_id" placeholder="Case ID (e.g. CR-2026-0001)" required>
-      <button type="submit">Check Status</button>
-    </form>
-    <div id="result"></div>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">
+      <svg class="wordmark-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="4" cy="12" r="3" fill="currentColor"/>
+        <path d="M7 12h4M13 12h4" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+        <circle cx="20" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      Sentinel
+    </a>
+    <nav class="site-nav">
+      <a href="report.html">Report</a>
+      <a href="track.html" aria-current="page">Track</a>
+      <a class="nav-cta" href="login.html">Log in</a>
+    </nav>
+  </header>
+
+  <main class="container container-task task-page">
+    <div class="task-head">
+      <h1>Track a case</h1>
+      <p>Enter the case ID you were given when the report was filed. No login required — the ID is
+        the only thing that opens the record.</p>
+    </div>
+
+    <div class="task-card">
+      <form id="track-form" novalidate>
+        <label class="field">
+          <span>Case ID</span>
+          <input name="case_id" class="mono input-lg" placeholder="CR-2026-0001" autocomplete="off"
+                 spellcheck="false" autocapitalize="characters" required>
+        </label>
+        <button class="btn btn-submit" type="submit">Check status</button>
+      </form>
+    </div>
+
+    <div id="result" class="track-result" role="status" aria-live="polite"></div>
+
+    <p class="task-alt">Lost a walk-in case ID? It cannot be recovered — <a href="report.html">file
+      the report again</a>. Reporting with an account keeps every case on
+      <a href="login.html">one dashboard</a> instead.</p>
   </main>
+
+  <footer class="site-footer">
+    <span>Sentinel — Computerized Crime Reporting and Tracking System (CCRTS).</span>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="report.html">Report</a>
+      <a href="login.html">Log in</a>
+    </nav>
+  </footer>
+
   <script src="js/api.js"></script>
   <script src="js/track-case.js"></script>
 </body>

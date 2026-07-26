@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const { requireAuth } = require('../middleware/auth');
 const { requireFields, isAllowedEvidenceFile, isNonEmptyString, MAX_EVIDENCE_BYTES } = require('../lib/validators');
 const { nextCaseId } = require('../lib/caseId');
+const { recordEvent, ACTOR_WALKIN } = require('../lib/caseTrail');
 
 const router = express.Router();
 const REQUIRED = ['type', 'location', 'description', 'incident_time'];
@@ -38,24 +39,40 @@ function handleUpload(req, res, next) {
   });
 }
 
-function insertReport(db, { citizen_id, is_anonymous, type, location, description, incident_time, evidence_path }) {
+const RELATIONSHIPS = ['affected', 'witness'];
+
+function insertReport(db, {
+  citizen_id, is_anonymous, type, location, description, incident_time, evidence_path,
+  reporter_relationship
+}) {
   const year = new Date().getFullYear();
   const case_id = nextCaseId(db, year);
+
+  // Unrecognised or absent values store NULL rather than guessing. A wrong guess
+  // here would misrepresent how much the reporter's later confirmation is worth.
+  const relationship = RELATIONSHIPS.includes(reporter_relationship) ? reporter_relationship : null;
+
   db.prepare(`
-    INSERT INTO reports (case_id, citizen_id, is_anonymous, type, location, description, incident_time, evidence_path)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(case_id, citizen_id, is_anonymous ? 1 : 0, type, location, description, incident_time, evidence_path || null);
+    INSERT INTO reports (case_id, citizen_id, is_anonymous, type, location, description,
+                         incident_time, evidence_path, reporter_relationship)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(case_id, citizen_id, is_anonymous ? 1 : 0, type, location, description,
+    incident_time, evidence_path || null, relationship);
 
   const reportId = db.prepare('SELECT id FROM reports WHERE case_id = ?').get(case_id).id;
-  db.prepare('INSERT INTO status_history (report_id, status, updated_by) VALUES (?, ?, ?)')
-    .run(reportId, 'pending', citizen_id ? String(citizen_id) : 'system');
+  recordEvent(db, {
+    reportId,
+    status: 'pending',
+    event: 'status',
+    actor: citizen_id ? citizen_id : ACTOR_WALKIN
+  });
 
   return case_id;
 }
 
 router.post('/', requireAuth, handleUpload, (req, res) => {
   try {
-    const { type, location, description, incident_time, is_anonymous } = req.body || {};
+    const { type, location, description, incident_time, is_anonymous, reporter_relationship } = req.body || {};
     const missing = requireFields({ type, location, description, incident_time }, REQUIRED);
     if (missing.length) {
       deleteUploadedFile(req);
@@ -70,7 +87,7 @@ router.post('/', requireAuth, handleUpload, (req, res) => {
     const case_id = insertReport(db, {
       citizen_id: req.session.user.id,
       is_anonymous: is_anonymous === 'true' || is_anonymous === true,
-      type, location, description, incident_time,
+      type, location, description, incident_time, reporter_relationship,
       evidence_path: req.file ? req.file.filename : null
     });
 
@@ -84,7 +101,7 @@ router.post('/', requireAuth, handleUpload, (req, res) => {
 
 router.post('/walkin', handleUpload, (req, res) => {
   try {
-    const { type, location, description, incident_time } = req.body || {};
+    const { type, location, description, incident_time, reporter_relationship } = req.body || {};
     const missing = requireFields({ type, location, description, incident_time }, REQUIRED);
     if (missing.length) {
       deleteUploadedFile(req);
@@ -99,7 +116,7 @@ router.post('/walkin', handleUpload, (req, res) => {
     const case_id = insertReport(db, {
       citizen_id: null,
       is_anonymous: true,
-      type, location, description, incident_time,
+      type, location, description, incident_time, reporter_relationship,
       evidence_path: req.file ? req.file.filename : null
     });
 

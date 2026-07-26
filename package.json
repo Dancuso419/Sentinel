@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "seed": "node database/seed.js",
+    "create-admin": "node scripts/create-admin.js",
     "test": "jest --runInBand"
   },
   "dependencies": {

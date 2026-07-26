@@ -165,9 +165,48 @@ test('same-status resubmission with a changed resolution_note still persists the
   const report = list.body.reports.find(r => r.case_id === caseId);
   expect(report.resolution_note).toBe('Spoke to two witnesses near the market entrance.');
 
-  // A same-status note update must not spam the audit trail with a duplicate row.
+  // A same-status note update must not spam the trail with a duplicate STATUS row...
   const history = db.prepare('SELECT * FROM status_history WHERE report_id = (SELECT id FROM reports WHERE case_id = ?) ORDER BY id').all(caseId);
-  expect(history.map(h => h.status)).toEqual(['pending', 'investigating']);
+  expect(history.filter(h => h.event === 'status').map(h => h.status))
+    .toEqual(['pending', 'investigating']);
+
+  // ...but it must still be recorded. A resolution note that can be rewritten
+  // without a trace defeats the audit trail this system exists to provide.
+  const noteEvents = history.filter(h => h.event === 'note');
+  expect(noteEvents).toHaveLength(1);
+  expect(noteEvents[0].detail).toBe('Spoke to two witnesses near the market entrance.');
+});
+
+test('every revision of a resolution note is logged, not just the first', async () => {
+  const app = buildApp();
+  const citizen = request.agent(app);
+  await registerAndLogin(app, citizen);
+  const create = await citizen.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00');
+  const caseId = create.body.case_id;
+
+  const officer = request.agent(app);
+  await registerAndLogin(app, officer, {
+    name: 'Officer Bello', email: 'officer@example.com', role: 'officer'
+  });
+  await officer.patch(`/api/officer/reports/${caseId}/status`).send({ status: 'investigating' });
+  await officer.patch(`/api/officer/reports/${caseId}/status`)
+    .send({ status: 'resolved', resolution_note: 'Suspect identified and handed to local authority.' });
+
+  // The scenario this guards: quietly rewriting the account of what was done.
+  await officer.patch(`/api/officer/reports/${caseId}/status`)
+    .send({ status: 'resolved', resolution_note: 'Complainant withdrew the allegation.' });
+
+  const res = await officer.get(`/api/officer/reports/${caseId}/history`);
+  const notes = res.body.history.filter(h => h.event === 'note');
+  expect(notes).toHaveLength(1);
+  expect(notes[0].detail).toBe('Complainant withdrew the allegation.');
+  expect(notes[0].updated_by).toBe('Officer Bello (officer)');
+
+  // The original wording survives on the resolving row, so both versions are visible.
+  const resolved = res.body.history.find(h => h.event === 'status' && h.status === 'resolved');
+  expect(resolved.detail).toBe('Suspect identified and handed to local authority.');
 });
 
 test('same-status resubmission of resolved with an already-set note does not spuriously 400', async () => {
@@ -210,6 +249,36 @@ test('officer can fetch the status-history audit trail for a report', async () =
   const res = await officer.get(`/api/officer/reports/${caseId}/history`);
   expect(res.status).toBe(200);
   expect(res.body.history.map(h => h.status)).toEqual(['pending', 'investigating']);
+});
+
+test('history names the staff member who acted but never the citizen', async () => {
+  const app = buildApp();
+  const citizen = request.agent(app);
+  await registerAndLogin(app, citizen);
+  // Anonymous report: the citizen_id is still recorded on the opening history row,
+  // so this is the case where a naive id-to-name lookup would leak the reporter.
+  const create = await citizen.post('/api/reports')
+    .field('type', 'Theft').field('location', 'Main Market')
+    .field('description', 'Phone stolen').field('incident_time', '2026-07-20T10:00')
+    .field('is_anonymous', 'true');
+  const caseId = create.body.case_id;
+
+  const officer = request.agent(app);
+  await registerAndLogin(app, officer, {
+    name: 'Officer Bello', email: 'officer@example.com', role: 'officer'
+  });
+  await officer.patch(`/api/officer/reports/${caseId}/status`).send({ status: 'investigating' });
+
+  const res = await officer.get(`/api/officer/reports/${caseId}/history`);
+  expect(res.status).toBe(200);
+
+  const [filed, moved] = res.body.history;
+  expect(filed.updated_by).toBe('The reporter');
+  expect(moved.updated_by).toBe('Officer Bello (officer)');
+
+  // No raw user id and no citizen name anywhere in the payload.
+  const serialised = JSON.stringify(res.body);
+  expect(serialised).not.toMatch(/"updated_by":"\d+"/);
 });
 
 test('history for an unknown case returns 404', async () => {
