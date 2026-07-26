@@ -1,15 +1,36 @@
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+const loginForm = document.getElementById('login-form');
+const loginMessage = document.getElementById('message');
+
+loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const form = new FormData(e.target);
-  const message = document.getElementById('message');
+
+  if (!loginForm.checkValidity()) {
+    loginForm.reportValidity();
+    return;
+  }
+
+  const submit = loginForm.querySelector('.btn-submit');
+  const data = new FormData(loginForm);
+  submit.disabled = true;
+  submit.textContent = 'Signing in…';
+  loginMessage.textContent = '';
+  loginMessage.className = 'msg';
+
   try {
     const { user } = await apiRequest('POST', '/api/auth/login', {
-      email: form.get('email'), password: form.get('password')
+      email: data.get('email'),
+      password: data.get('password')
     });
-    const destinations = { citizen: 'citizen-dashboard.html', officer: 'officer-dashboard.html', admin: 'admin-dashboard.html' };
+    const destinations = {
+      citizen: 'citizen-dashboard.html',
+      officer: 'officer-dashboard.html',
+      admin: 'admin-dashboard.html'
+    };
     window.location.href = destinations[user.role] || 'index.html';
   } catch (err) {
-    message.textContent = err.message;
-    message.className = 'error';
+    loginMessage.textContent = err.message;
+    loginMessage.className = 'msg error';
+    submit.disabled = false;
+    submit.textContent = 'Log in';
   }
 });

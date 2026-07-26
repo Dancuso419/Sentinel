@@ -1,15 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Admin Dashboard — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Oversight — Sentinel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script>try{var r=localStorage.getItem('sentinel.rail');if(r?r==='open':innerWidth>=1200)document.documentElement.classList.add('rail-open')}catch(e){}</script>
+</head>
 <body>
-  <header><h1>Admin Dashboard</h1><button id="logout-btn" type="button">Logout</button></header>
-  <main>
-    <section><h2>Reports by Type</h2><ul id="by-type"></ul></section>
-    <section><h2>Reports by Status</h2><ul id="by-status"></ul></section>
-    <section><h2>Reports by Date</h2><ul id="by-date"></ul></section>
-    <section><h2>Officer Accounts</h2><table id="users-table"><thead><tr><th>Name</th><th>Email</th><th>Active</th><th></th></tr></thead><tbody></tbody></table></section>
+  <nav class="rail" aria-label="Main">
+    <div class="rail-head">
+      <span class="rail-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="4" cy="12" r="3" fill="currentColor"/>
+          <path d="M7 12h4M13 12h4" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+          <circle cx="20" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </span>
+      <span class="rail-wordmark">Sentinel</span>
+    </div>
+
+    <a class="rail-link" href="#overview" aria-current="true" data-label="Overview">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1.6" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="6" height="6" rx="1.6" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="6" height="6" rx="1.6" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="6" height="6" rx="1.6" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span class="rail-label">Overview</span>
+    </a>
+    <a class="rail-link" href="#reviews" data-label="Sign-off queue">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 3h8l4 4v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v4h4" stroke="currentColor" stroke-width="1.5"/><path d="m6.6 12.2 1.6 1.6 3.4-3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rail-label">Sign-off queue</span>
+    </a>
+    <a class="rail-link" href="#officers" data-label="Officers">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="6.5" r="2.8" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 16.5a5.5 5.5 0 0 1 11 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 3.2 12.2 4v1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      <span class="rail-label">Officers</span>
+    </a>
+    <a class="rail-link" href="#citizens" data-label="Citizens">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="7.5" cy="7" r="2.6" stroke="currentColor" stroke-width="1.5"/><path d="M2.5 16a5 5 0 0 1 10 0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M13.5 6.2a2.4 2.4 0 0 1 0 4.6M14.5 16a5 5 0 0 0-1.6-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <span class="rail-label">Citizens</span>
+    </a>
+    <a class="rail-link" href="officer-dashboard.html" data-label="Case queue">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M3.5 5.5h13M3.5 10h13M3.5 14.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="rail-label">Case queue</span>
+    </a>
+    <a class="rail-link" href="performance.html" data-label="Officer standings">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 16v-5M10 16V4M16 16v-8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span class="rail-label">Officer standings</span>
+    </a>
+
+    <span class="rail-divider rail-spacer" aria-hidden="true"></span>
+
+    <a class="rail-link rail-account" id="rail-account" href="account.html" data-label="Account">
+      <span class="rail-avatar" data-account="initials" aria-hidden="true">··</span>
+      <span class="rail-label">
+        <span class="rail-account-name" data-account="name">Loading…</span>
+        <span class="rail-account-role" data-account="role"></span>
+      </span>
+    </a>
+
+    <button class="rail-link" id="logout-btn" type="button" data-label="Log out">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 3H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 7l3 3-3 3M15 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rail-label">Log out</span>
+    </button>
+
+    <button class="rail-link rail-toggle" id="rail-toggle" type="button" aria-expanded="false" aria-label="Expand sidebar" data-label="Expand sidebar">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 5.5 12 10l-4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rail-label">Collapse</span>
+    </button>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-head">
+      <div>
+        <h1>Oversight</h1>
+        <p class="muted">Who is on the system, and what the case load looks like across every
+          report on record.</p>
+      </div>
+      <span class="live-dot" id="analytics-scope">Loading</span>
+    </div>
+
+    <div class="tile-row" style="--tile-cols: 4" id="overview">
+      <a class="tile tile-plain" href="#officers">
+        <span class="label">Officer accounts</span>
+        <span class="tile-figure" data-count="officers">—</span>
+        <span class="tile-note" data-note="officers">Registered on the system</span>
+      </a>
+      <a class="tile tile-plain" href="#citizens">
+        <span class="label">Citizen accounts</span>
+        <span class="tile-figure" data-count="citizens">—</span>
+        <span class="tile-note" data-note="citizens">Registered on the system</span>
+      </a>
+      <div class="tile tile-plain">
+        <span class="label">Reports on record</span>
+        <span class="tile-figure" data-count="reports">—</span>
+        <span class="tile-note" data-note="reports">Across every incident type</span>
+      </div>
+      <a class="tile tile-action" href="officer-dashboard.html">
+        <span class="label">Case load</span>
+        <span class="tile-corner" aria-hidden="true">
+          <svg viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="tile-figure">Open the queue</span>
+        <span class="tile-note">Act on any case as an officer would</span>
+      </a>
+    </div>
+
+    <section class="app-section" id="reviews">
+      <div class="section-head">
+        <h2>Resolutions awaiting sign-off</h2>
+        <span class="muted" style="font-size: var(--t-small)" id="review-summary"></span>
+      </div>
+
+      <div class="assurance assurance-neutral">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5 2.5 4v4c0 3.1 2.3 5.6 5.5 6.5 3.2-.9 5.5-3.4 5.5-6.5V4L8 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m5.6 8 1.7 1.7 3.2-3.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span><strong>Every resolved case passes through here.</strong>
+          A reporter's confirmation is better evidence — they are the one who knows whether the
+          harm was put right — but it is not always available. A walk-in reporter may never
+          return, and a witness was never in a position to judge the outcome. This is the check
+          that always applies.</span>
+      </div>
+
+      <div id="review-list"></div>
+    </section>
+
+    <section class="app-section">
+      <div class="analytics-split">
+        <div class="card">
+          <div class="card-head">
+            <h2>Where the case load sits</h2>
+            <span class="muted" style="font-size: var(--t-small)">By status</span>
+          </div>
+          <div class="bar-list" id="by-status"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Incidents by type</h2>
+            <span class="muted" style="font-size: var(--t-small)">Most reported first</span>
+          </div>
+          <div class="bar-list" id="by-type"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-section">
+      <div class="card">
+        <div class="card-head">
+          <h2>Reports filed by day</h2>
+          <span class="muted" style="font-size: var(--t-small)">Most recent first</span>
+        </div>
+        <div class="bar-list" id="by-date"></div>
+      </div>
+    </section>
+
+    <section class="app-section" id="officers">
+      <div class="section-head">
+        <h2>Officer accounts</h2>
+        <span class="muted" style="font-size: var(--t-small)">Deactivating ends access immediately,
+          including a session already open.</span>
+      </div>
+
+      <div class="card" style="margin-bottom: var(--s-md)">
+        <div class="card-head">
+          <h2>Add an officer</h2>
+          <span class="muted" style="font-size: var(--t-small)">This is the only way a privileged
+            account can be created.</span>
+        </div>
+
+        <form id="officer-form" novalidate>
+          <div class="field-grid">
+            <label class="field">
+              <span>Full name</span>
+              <input name="name" placeholder="e.g. Officer Nwosu" required>
+            </label>
+            <label class="field">
+              <span>Email</span>
+              <input name="email" type="email" placeholder="nwosu@example.com" required>
+            </label>
+            <label class="field">
+              <span>Starting password</span>
+              <input name="password" type="text" autocomplete="off" minlength="8" required>
+              <span class="field-hint">At least 8 characters. Give it to the officer directly —
+                they can change it from their own account page.</span>
+            </label>
+          </div>
+          <div class="cell-actions" style="margin-top: var(--s-md)">
+            <button class="btn btn-sm btn-submit" type="submit">Create officer account</button>
+          </div>
+          <p id="officer-message" class="msg" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <div class="table-wrap">
+        <table id="officers-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Joined</th>
+              <th scope="col">Access</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="app-section" id="citizens">
+      <div class="section-head">
+        <h2>Citizen accounts</h2>
+        <span class="muted" style="font-size: var(--t-small)">Read-only roster</span>
+      </div>
+
+      <div class="assurance assurance-neutral">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5 2.5 4v4c0 3.1 2.3 5.6 5.5 6.5 3.2-.9 5.5-3.4 5.5-6.5V4L8 1.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 6v3.2M8 11.2v.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span><strong>No reports are listed against a citizen here, by design.</strong>
+          An admin can already read the full queue, where anonymous reports have their identity
+          stripped. A per-person report count on this roster would let those two views be
+          matched back up — so the roster carries account facts only.</span>
+      </div>
+
+      <div class="table-wrap">
+        <table id="citizens-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Joined</th>
+              <th scope="col">Access</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
+
   <script src="js/api.js"></script>
+  <script src="js/rail.js"></script>
   <script src="js/admin-dashboard.js"></script>
 </body>
 </html>

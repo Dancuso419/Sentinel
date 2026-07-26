@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const { requireRole } = require('../middleware/auth');
 const { streamCaseSummary } = require('../lib/casePdf');
+const { recordEvent, readTrail, handlingOfficer } = require('../lib/caseTrail');
+const { officerLeaderboard } = require('../lib/officerStats');
 
 const router = express.Router();
 const WORKFLOW = ['pending', 'investigating', 'resolved'];
@@ -17,6 +19,8 @@ router.get('/reports', (req, res) => {
     let sql = `
       SELECT r.id, r.case_id, r.is_anonymous, r.type, r.location, r.description,
              r.incident_time, r.status, r.resolution_note, r.evidence_path, r.created_at, r.updated_at,
+             r.reporter_relationship, r.reporter_verdict, r.reporter_verdict_note,
+             r.reporter_verdict_at, r.reviewed_at,
              u.name AS citizen_name
       FROM reports r
       LEFT JOIN users u ON u.id = r.citizen_id
@@ -32,6 +36,8 @@ router.get('/reports', (req, res) => {
     const rows = db.prepare(sql).all(...params);
     const reports = rows.map((r) => {
       if (r.is_anonymous) delete r.citizen_name;
+      // Derived, not stored — see lib/caseTrail.js.
+      r.handled_by = handlingOfficer(db, r.id);
       return r;
     });
     res.json({ reports });
@@ -79,6 +85,17 @@ router.patch('/reports/:case_id/status', (req, res) => {
           UPDATE reports SET resolution_note = ?, updated_at = datetime('now')
           WHERE id = ?
         `).run(resolution_note, report.id);
+
+        // Revising a resolution note used to update the case and record nothing,
+        // so a closed case could be quietly rewritten after the fact. The note is
+        // the officer's account of what they did — every version of it is logged.
+        recordEvent(db, {
+          reportId: report.id,
+          status: report.status,
+          event: 'note',
+          detail: resolution_note,
+          actor: req.session.user.id
+        });
       }
       return res.json({ ok: true });
     }
@@ -89,8 +106,13 @@ router.patch('/reports/:case_id/status', (req, res) => {
       WHERE id = ?
     `).run(status, resolution_note || null, report.id);
 
-    db.prepare('INSERT INTO status_history (report_id, status, updated_by) VALUES (?, ?, ?)')
-      .run(report.id, status, String(req.session.user.id));
+    recordEvent(db, {
+      reportId: report.id,
+      status,
+      event: 'status',
+      detail: status === 'resolved' ? effectiveNote : null,
+      actor: req.session.user.id
+    });
 
     res.json({ ok: true });
   } catch (err) {
@@ -118,17 +140,24 @@ router.get('/reports/:case_id/evidence', (req, res) => {
   });
 });
 
+// Officer standings. Open to officers as well as admins: this is a record of the
+// officers' own work, and a performance measure people are ranked by but cannot see
+// is worse than no measure at all. Contains no citizen data of any kind.
+router.get('/performance', (req, res) => {
+  try {
+    res.json(officerLeaderboard(req.app.locals.db));
+  } catch (err) {
+    console.error('GET /api/officer/performance failed:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.get('/reports/:case_id/history', (req, res) => {
   const db = req.app.locals.db;
   const report = db.prepare('SELECT * FROM reports WHERE case_id = ?').get(req.params.case_id);
   if (!report) return res.status(404).json({ error: 'Case not found' });
 
-  const history = db.prepare(`
-    SELECT status, updated_by, updated_at FROM status_history
-    WHERE report_id = ? ORDER BY id ASC
-  `).all(report.id);
-
-  res.json({ history });
+  res.json({ history: readTrail(db, report.id) });
 });
 
 module.exports = router;

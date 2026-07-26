@@ -103,3 +103,85 @@ test('logout clears the session', async () => {
   const res = await agent.post('/api/auth/logout');
   expect(res.status).toBe(200);
 });
+
+test('GET /me names the signed-in account and 401s when anonymous', async () => {
+  const app = buildApp();
+  await request(app).post('/api/auth/register').send({
+    name: 'Ada', email: 'ada@example.com', password: 'secret123'
+  });
+
+  const anon = await request(app).get('/api/auth/me');
+  expect(anon.status).toBe(401);
+
+  const agent = request.agent(app);
+  await agent.post('/api/auth/login').send({ email: 'ada@example.com', password: 'secret123' });
+
+  const res = await agent.get('/api/auth/me');
+  expect(res.status).toBe(200);
+  expect(res.body.user).toMatchObject({ name: 'Ada', email: 'ada@example.com', role: 'citizen' });
+  expect(res.body.user.password_hash).toBeUndefined();
+});
+
+test('GET /me stops answering once the account is deactivated', async () => {
+  const app = buildApp();
+  const db = app.locals.db;
+  createUserDirectly(db, { name: 'Bello', email: 'bello@example.com', password: 'secret123', role: 'officer' });
+
+  const agent = request.agent(app);
+  await agent.post('/api/auth/login').send({ email: 'bello@example.com', password: 'secret123' });
+  expect((await agent.get('/api/auth/me')).status).toBe(200);
+
+  db.prepare("UPDATE users SET is_active = 0 WHERE email = 'bello@example.com'").run();
+  expect((await agent.get('/api/auth/me')).status).toBe(401);
+});
+
+test('changes own password and requires the current one', async () => {
+  const app = buildApp();
+  await request(app).post('/api/auth/register').send({
+    name: 'Ada', email: 'ada@example.com', password: 'secret123'
+  });
+
+  const agent = request.agent(app);
+  await agent.post('/api/auth/login').send({ email: 'ada@example.com', password: 'secret123' });
+
+  const wrong = await agent.patch('/api/auth/password')
+    .send({ current_password: 'nope12345', new_password: 'brandnew123' });
+  expect(wrong.status).toBe(403);
+
+  const short = await agent.patch('/api/auth/password')
+    .send({ current_password: 'secret123', new_password: 'tiny' });
+  expect(short.status).toBe(400);
+
+  const same = await agent.patch('/api/auth/password')
+    .send({ current_password: 'secret123', new_password: 'secret123' });
+  expect(same.status).toBe(400);
+
+  const ok = await agent.patch('/api/auth/password')
+    .send({ current_password: 'secret123', new_password: 'brandnew123' });
+  expect(ok.status).toBe(200);
+
+  // The old password must stop working and the new one must start.
+  const stale = await request(app).post('/api/auth/login')
+    .send({ email: 'ada@example.com', password: 'secret123' });
+  expect(stale.status).toBe(401);
+
+  const fresh = await request(app).post('/api/auth/login')
+    .send({ email: 'ada@example.com', password: 'brandnew123' });
+  expect(fresh.status).toBe(200);
+});
+
+test('anonymous callers cannot change a password', async () => {
+  const app = buildApp();
+  const res = await request(app).patch('/api/auth/password')
+    .send({ current_password: 'secret123', new_password: 'brandnew123' });
+  expect(res.status).toBe(401);
+});
+
+test('registration enforces the 8-character minimum it advertises', async () => {
+  const app = buildApp();
+  const res = await request(app).post('/api/auth/register').send({
+    name: 'Ada', email: 'short@example.com', password: 'tiny'
+  });
+  expect(res.status).toBe(400);
+  expect(res.body.error).toMatch(/8 characters/);
+});

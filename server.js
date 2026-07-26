@@ -16,6 +16,7 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 4 }
 }));
 
+app.use('/api/stats', require('./routes/stats'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/cases', require('./routes/cases'));

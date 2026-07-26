@@ -1,17 +1,1355 @@
-* { box-sizing: border-box; }
-body { font-family: system-ui, sans-serif; margin: 0; background: #f4f6f8; color: #1a1a1a; }
-header { background: #0b2545; color: #fff; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-header h1 { margin: 0; font-size: 1.25rem; }
-header a { color: #cfe0ff; text-decoration: none; margin-left: 1rem; }
-header a:hover { text-decoration: underline; }
-main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-form { display: flex; flex-direction: column; gap: 0.75rem; background: #fff; padding: 1.5rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 480px; }
-input, select, textarea, button { font-size: 1rem; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
-button { background: #0b2545; color: #fff; cursor: pointer; border: none; }
-button:hover { background: #123a6b; }
-table { width: 100%; border-collapse: collapse; background: #fff; margin-top: 1rem; }
-th, td { text-align: left; padding: 0.6rem; border-bottom: 1px solid #e0e0e0; }
-th { background: #eef2f7; }
-.error { color: #b00020; }
-.success { color: #146c2e; background: #e8f5e9; padding: 0.75rem; border-radius: 4px; }
-section { background: #fff; padding: 1rem 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+/* ==========================================================================
+   Sentinel — design system
+   Tokens and rules are normative in /DESIGN.md. This file implements them.
+   Every size and color below resolves through a token; literals live only
+   in :root so the design system has a single source of truth.
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('../fonts/archivo-latin.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spline Sans Mono';
+  src: url('../fonts/spline-mono-latin.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* --- surface + ink --- */
+  --canvas: #F2F1ED;
+  --surface: #FFFFFF;
+  --ink: #0E0E0E;
+  --ink-hover: #262626;
+  --ink-soft: #575757;
+  --ink-mute: #6B6A65;
+  --hairline: #E4E2DD;
+  --hairline-strong: #D6D3CC;
+  --hairline-hover: #BFBBB2;
+  --on-ink: #FFFFFF;
+  --on-ink-hover: #E8E8E8;
+
+  /* --- data tiles --- */
+  --tile-peach: #FBE6D6;
+  --tile-peach-ink: #7A3D14;
+  --tile-mint: #DFF1E4;
+  --tile-mint-ink: #1D5B33;
+  --tile-ice: #DCEBF5;
+  --tile-ice-ink: #14506E;
+  --tile-lilac: #E9E8EF;
+  --tile-lilac-ink: #3E3B56;
+
+  /* --- signal --- */
+  --positive: #1B8A4B;
+  --danger: #B3261E;
+  --danger-tile: #F8E2E0;
+  --danger-tile-hover: #F2D0CD;
+
+  /* --- type ramp --- */
+  --t-micro: .6875rem;
+  --t-label: .75rem;
+  --t-small: .8125rem;
+  --t-body: .9375rem;
+  --t-base: 1rem;
+  --t-lead: 1.125rem;
+  --t-title: 1.25rem;
+  --t-2xl: 1.5rem;
+  --t-3xl: 1.75rem;
+  --t-4xl: 2rem;
+  --t-5xl: 2.25rem;
+  --t-6xl: 2.5rem;
+  --t-7xl: 3rem;
+
+  --t-display: clamp(2.75rem, 6vw, 5rem);
+  --t-heading: clamp(var(--t-title), 2vw, var(--t-3xl));
+  --t-stat: clamp(var(--t-4xl), 3.4vw, var(--t-7xl));
+  --t-stat-sm: clamp(var(--t-title), 2.1vw, var(--t-3xl));
+  --t-page-title: clamp(var(--t-2xl), 2.4vw, var(--t-4xl));
+  --t-task-title: clamp(var(--t-3xl), 3vw, var(--t-5xl));
+  --t-closing: clamp(var(--t-3xl), 3.5vw, var(--t-6xl));
+  --t-receipt: clamp(var(--t-2xl), 4vw, var(--t-5xl));
+  --t-demo-id: clamp(var(--t-title), 2.6vw, var(--t-3xl));
+
+  --font-sans: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* --- shape --- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* --- space --- */
+  --s-xs: 6px;
+  --s-sm: 10px;
+  --s-md: 16px;
+  --s-lg: 24px;
+  --s-xl: 40px;
+  --s-xxl: 64px;
+  --s-section: 104px;
+
+  --shadow-rest: 0 1px 2px rgba(14, 14, 14, .04), 0 8px 24px -12px rgba(14, 14, 14, .10);
+  --shadow-lift: 0 2px 4px rgba(14, 14, 14, .05), 0 16px 36px -16px rgba(14, 14, 14, .16);
+  --shadow-heavy: 0 4px 8px rgba(14, 14, 14, .08), 0 24px 48px -20px rgba(14, 14, 14, .28);
+
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --rail-w: 76px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  line-height: 1.6;
+  letter-spacing: -.005em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 500; letter-spacing: -.02em; line-height: 1.15; text-wrap: balance; }
+p { margin: 0; }
+a { color: inherit; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+img, svg { display: block; max-width: 100%; }
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- type helpers ------------------------------------------------ */
+
+.display { font-size: var(--t-display); font-weight: 500; line-height: .98; letter-spacing: -.035em; }
+.heading { font-size: var(--t-heading); letter-spacing: -.02em; }
+
+.label {
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.mono, .case-id {
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+.prose { max-width: 68ch; color: var(--ink-soft); }
+.muted { color: var(--ink-mute); }
+
+/* ---------- public shell ------------------------------------------------ */
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-lg);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--s-lg) var(--s-lg) 0;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: var(--t-lead);
+  font-weight: 600;
+  letter-spacing: -.03em;
+  text-decoration: none;
+}
+
+.wordmark-mark { width: 22px; height: 22px; flex: none; color: var(--ink); }
+
+.site-nav { display: flex; align-items: center; gap: var(--s-xs); flex-wrap: wrap; }
+
+.site-nav a {
+  padding: 9px 15px;
+  border-radius: var(--r-pill);
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  transition: background-color .25s var(--ease), color .25s var(--ease);
+}
+
+.site-nav a:hover { background: rgba(14, 14, 14, .06); color: var(--ink); }
+.site-nav a[aria-current='page'] { color: var(--ink); background: rgba(14, 14, 14, .07); }
+
+/* Deliberately NOT the black button. Black is the primary action on a page, and on
+   every public surface that action is "report" or "submit" — never "log in", which
+   most first-time visitors will never need. */
+.site-nav .nav-cta {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--hairline-strong);
+  padding: 9px 17px;
+}
+.site-nav .nav-cta:hover { background: var(--surface); border-color: var(--ink); color: var(--ink); }
+
+.pill[hidden] { display: none; }
+
+/* padding-inline, not the padding shorthand: .hero / .band / .task-page are applied
+   to the same element as .container and set block padding. A shorthand on either
+   side would silently zero the other. */
+.container { max-width: 1180px; margin: 0 auto; padding-inline: var(--s-lg); }
+.container-narrow { max-width: 560px; }
+
+.site-footer {
+  max-width: 1180px;
+  margin: var(--s-section) auto 0;
+  padding: var(--s-xl) var(--s-lg);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-md);
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ink-mute);
+  font-size: var(--t-small);
+}
+
+.site-footer nav { display: flex; gap: var(--s-md); flex-wrap: wrap; }
+.site-footer a { text-decoration: none; }
+.site-footer a:hover { color: var(--ink); text-decoration: underline; }
+
+/* ---------- buttons ----------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 26px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .25s var(--ease), transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+}
+
+.btn:hover { background: var(--ink-hover); }
+.btn:active { transform: translateY(1px); }
+
+.btn[disabled], .btn[aria-disabled='true'] {
+  background: var(--hairline-strong);
+  color: var(--ink-mute);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary { background: var(--surface); color: var(--ink); border-color: var(--hairline-strong); padding: 13px 25px; }
+.btn-secondary:hover { background: var(--surface); border-color: var(--ink); }
+
+.btn-ghost { background: transparent; color: var(--ink-soft); padding: 9px 16px; font-size: var(--t-small); }
+.btn-ghost:hover { background: rgba(14, 14, 14, .06); color: var(--ink); }
+
+.btn-danger { background: var(--danger-tile); color: var(--danger); }
+.btn-danger:hover { background: var(--danger-tile-hover); }
+
+.btn-sm { padding: 9px 16px; font-size: var(--t-small); }
+.btn-arrow { width: 1em; height: 1em; flex: none; }
+
+/* ---------- tiles ------------------------------------------------------- */
+
+.tile-row {
+  display: grid;
+  grid-template-columns: repeat(var(--tile-cols, 4), minmax(0, 1fr));
+  gap: var(--s-md);
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-xs);
+  padding: var(--s-lg);
+  min-height: 152px;
+  border-radius: var(--r-lg);
+  background: var(--tile-lilac);
+  color: var(--tile-lilac-ink);
+  text-decoration: none;
+  overflow: hidden;
+}
+
+/* Admin's top row counts people, not cases. Reusing the status pastels there would
+   put "pending" orange on a headcount, so those tiles are plain paper instead —
+   which also stops the oversight screen reading as a copy of the officer queue. */
+.tile-plain {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-rest);
+}
+.tile-plain .label { color: var(--ink-mute); opacity: 1; }
+.tile-plain .tile-note { color: var(--ink-soft); opacity: 1; }
+
+a.tile-plain { transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease); }
+a.tile-plain:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); border-color: var(--hairline-hover); }
+
+.tile-peach { background: var(--tile-peach); color: var(--tile-peach-ink); }
+.tile-mint  { background: var(--tile-mint);  color: var(--tile-mint-ink); }
+.tile-ice   { background: var(--tile-ice);   color: var(--tile-ice-ink); }
+.tile-lilac { background: var(--tile-lilac); color: var(--tile-lilac-ink); }
+
+/* .85 is a contrast floor, not a taste call: at .72 the 12px label on the mint and
+   peach tiles measures ~3.7:1 against its own fill. .85 holds every tile at 4.5:1+. */
+.tile .label { opacity: .85; }
+
+.tile-figure {
+  font-size: var(--t-stat);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  margin-top: auto;
+}
+
+.tile-note { font-size: var(--t-small); opacity: .85; }
+
+/* the single black action tile — scarcity is what makes it read as primary */
+.tile-action {
+  background: var(--ink);
+  color: var(--on-ink);
+  box-shadow: var(--shadow-heavy);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.tile-action .label { opacity: .6; }
+.tile-action:hover { transform: translateY(-2px); }
+.tile-action .tile-figure { font-size: var(--t-stat-sm); letter-spacing: -.025em; }
+
+.tile-corner {
+  position: absolute;
+  top: var(--s-md); right: var(--s-md);
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .16);
+}
+.tile-corner svg { width: 15px; height: 15px; }
+
+/* ---------- cards ------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-rest);
+}
+
+.card-head, .section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-md);
+  margin-bottom: var(--s-lg);
+  flex-wrap: wrap;
+}
+
+/* ---------- status pills ------------------------------------------------ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.pill::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.pill-pending       { background: var(--tile-peach); color: var(--tile-peach-ink); }
+.pill-investigating { background: var(--tile-ice);   color: var(--tile-ice-ink); }
+.pill-resolved      { background: var(--tile-mint);  color: var(--tile-mint-ink); }
+
+/* ---------- forms ------------------------------------------------------- */
+
+.field { display: flex; flex-direction: column; gap: 7px; margin-bottom: var(--s-md); }
+.field > span, .field-label { font-size: var(--t-small); font-weight: 500; color: var(--ink-soft); }
+
+input, select, textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+
+input::placeholder, textarea::placeholder { color: var(--ink-mute); }
+input:hover, select:hover, textarea:hover { border-color: var(--hairline-hover); }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px rgba(14, 14, 14, .09);
+}
+
+textarea { min-height: 118px; resize: vertical; }
+
+/* The native select arrow is the one control that would keep its OS look while
+   everything around it is pill-shaped and hairlined. Drawn here instead, inline
+   so it still works with no network. */
+select {
+  appearance: none;
+  padding-right: 38px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6.5 8 10.5 12 6.5' stroke='%236B6A65' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  background-size: 15px;
+}
+
+.filter-bar select, .row-update select { background-position: right 11px center; padding-right: 32px; }
+
+input[type='file'] { padding: 10px 12px; background: var(--canvas); cursor: pointer; }
+input[type='checkbox'] { width: auto; accent-color: var(--ink); }
+
+.field-checkbox {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--canvas);
+  cursor: pointer;
+}
+.field-checkbox input { margin-top: 3px; flex: none; }
+.field-checkbox > span { font-weight: 400; color: var(--ink); font-size: var(--t-body); }
+.field-hint { font-size: var(--t-small); color: var(--ink-mute); }
+
+/* Show/hide password. The wrapper is injected by js/password-toggle.js, so the
+   reserved space on the right is defined here once rather than per form. */
+.password-field { position: relative; display: block; }
+.password-field input { padding-right: 46px; }
+
+.password-toggle {
+  position: absolute;
+  top: 50%; right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 34px; height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-mute);
+  cursor: pointer;
+  transition: background-color .2s var(--ease), color .2s var(--ease);
+}
+
+.password-toggle svg { width: 18px; height: 18px; }
+.password-toggle:hover { background: rgba(14, 14, 14, .06); color: var(--ink); }
+.password-toggle[aria-pressed='true'] { color: var(--ink); }
+.field-checkbox .field-hint { display: block; margin-top: 2px; }
+
+form .btn-submit { width: 100%; margin-top: var(--s-xs); }
+
+/* ---------- choice sets (radio groups) ----------------------------------- */
+
+.choice-set { border: 0; padding: 0; margin: 0 0 var(--s-md); display: flex; flex-direction: column; gap: 7px; }
+.choice-set legend { padding: 0; font-size: var(--t-small); font-weight: 500; color: var(--ink-soft); }
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-sm);
+  background: var(--canvas);
+  cursor: pointer;
+  transition: border-color .2s var(--ease), background-color .2s var(--ease);
+}
+.choice:hover { border-color: var(--hairline-hover); }
+.choice input { width: auto; flex: none; margin-top: 3px; accent-color: var(--ink); }
+.choice > span { font-size: var(--t-body); }
+.choice:has(input:checked) { border-color: var(--ink); background: var(--surface); }
+
+/* ---------- verification ------------------------------------------------- */
+
+.verify-box {
+  padding: var(--s-md);
+  margin-top: var(--s-md);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  border: 1px solid var(--hairline);
+}
+.verify-box h3 { font-size: var(--t-base); margin-bottom: 4px; }
+.verify-box p { font-size: var(--t-small); color: var(--ink-soft); }
+.verify-actions { display: flex; gap: var(--s-sm); flex-wrap: wrap; margin-top: var(--s-md); }
+.verify-box textarea { min-height: 72px; margin-top: var(--s-sm); }
+
+.pill-confirmed { background: var(--tile-mint); color: var(--tile-mint-ink); }
+.pill-disputed { background: var(--danger-tile); color: var(--danger); }
+.pill-awaiting { background: var(--tile-lilac); color: var(--tile-lilac-ink); }
+
+.verdict-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--t-small); }
+
+/* ---------- feedback messages ------------------------------------------- */
+
+.msg { margin-top: var(--s-md); font-size: var(--t-small); }
+.msg:empty { margin: 0; }
+
+.error { color: var(--danger); background: var(--danger-tile); padding: 12px 14px; border-radius: var(--r-sm); }
+.success { color: var(--tile-mint-ink); background: var(--tile-mint); padding: 14px 16px; border-radius: var(--r-sm); }
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  margin-bottom: var(--s-lg);
+  border-radius: var(--r-md);
+  background: var(--tile-ice);
+  color: var(--tile-ice-ink);
+  font-size: var(--t-small);
+}
+
+/* the case-ID receipt — shown once, so it is built to be read and copied */
+.receipt { margin-top: var(--s-md); padding: var(--s-lg); border-radius: var(--r-lg); background: var(--ink); color: var(--on-ink); }
+.receipt .label { opacity: .55; }
+.receipt-id {
+  font-family: var(--font-mono);
+  font-size: var(--t-receipt);
+  font-weight: 500;
+  letter-spacing: .02em;
+  margin: 8px 0 10px;
+}
+.receipt p { font-size: var(--t-small); opacity: .72; }
+
+/* ---------- tables ------------------------------------------------------ */
+
+.table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-rest);
+}
+
+table { width: 100%; border-collapse: collapse; min-width: 660px; }
+
+/* The officer queue carries inline controls in one cell, so it needs real width
+   before columns start crushing. It scrolls inside .table-wrap rather than
+   collapsing into cards — an officer reading a queue wants the columns aligned. */
+.table-wide table { min-width: 1120px; }
+
+thead th {
+  text-align: left;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--ink-mute);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+tbody td { padding: 15px 18px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr { transition: background-color .18s var(--ease); }
+tbody tr:hover { background: var(--canvas); }
+tbody tr.detail-row:hover { background: transparent; }
+
+td a { color: var(--ink); text-underline-offset: 3px; }
+
+.cell-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+.table-empty { padding: var(--s-xxl) var(--s-lg); text-align: center; color: var(--ink-mute); }
+.table-empty strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 6px; }
+
+/* ---------- app shell (signed-in) --------------------------------------- */
+
+/* The rail retracts. --rail-current drives both the rail's own width and the
+   content offset, so the two can never disagree; .rail-open is set on <html> by an
+   inline head script so the open state is correct on first paint. */
+:root { --rail-current: var(--rail-w); }
+.rail-open { --rail-current: 234px; }
+
+.rail {
+  position: fixed;
+  top: var(--s-md); left: var(--s-md); bottom: var(--s-md);
+  width: var(--rail-current);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-xs);
+  padding: var(--s-md) 0;
+  background: var(--ink);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-heavy);
+  overflow: hidden;
+  z-index: 20;
+  /* Animating width is a layout property, which is normally worth avoiding. Kept
+     deliberately here: a retracting sidebar has to reflow the content beside it, so
+     transform would either overlap the table or leave a gap. The cost is bounded —
+     two elements, once per click, never scroll-linked — and the reduced-motion block
+     at the end of this file zeroes it. If it ever janks, the fix is a drawer that
+     overlays the content, not a transform faking this. */
+  transition: width .28s var(--ease);
+}
+
+.rail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 18px;
+  margin-bottom: var(--s-sm);
+  color: var(--on-ink);
+}
+.rail-open .rail-head { justify-content: flex-start; }
+
+.rail-mark { display: grid; place-items: center; width: 40px; height: 40px; flex: none; }
+.rail-mark svg { width: 22px; height: 22px; }
+
+.rail-wordmark {
+  font-size: var(--t-base);
+  font-weight: 600;
+  letter-spacing: -.03em;
+  white-space: nowrap;
+  display: none;
+}
+.rail-open .rail-wordmark { display: block; }
+
+.rail-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 44px; height: 44px;
+  padding: 0;
+  border-radius: var(--r-md);
+  color: rgba(255, 255, 255, .62);
+  text-decoration: none;
+  background: none;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color .25s var(--ease), color .25s var(--ease);
+}
+
+.rail-link svg { width: 19px; height: 19px; flex: none; }
+.rail-link:hover { background: rgba(255, 255, 255, .1); color: var(--on-ink); }
+/* Matches both aria-current values in use: "page" for a link to another document,
+   "true" for the in-page section links the admin rail sets as you scroll. */
+.rail-link[aria-current]:not([aria-current='false']) { background: var(--on-ink); color: var(--ink); }
+.rail-spacer { margin-top: auto; }
+
+.rail-label { display: none; font-size: var(--t-small); white-space: nowrap; }
+
+.rail-open .rail-link {
+  width: calc(100% - 24px);
+  justify-content: flex-start;
+  padding: 0 13px;
+}
+.rail-open .rail-label { display: block; }
+/* The tooltip exists to name an icon-only control. With labels visible it is noise. */
+.rail-open .rail-link::after { content: none; }
+
+/* The account chip. A user must be able to tell which account they are in without
+   clicking anything, so the initials disc is always visible — collapsed it IS the
+   chip, expanded it gains the name and role beside it. */
+.rail-account { height: auto; padding: 8px 0; }
+.rail-open .rail-account { padding: 8px 13px; }
+
+.rail-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px; height: 28px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--on-ink);
+  color: var(--ink);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.rail-account .rail-label { display: none; min-width: 0; line-height: 1.25; }
+.rail-open .rail-account .rail-label { display: block; }
+
+.rail-account-name {
+  display: block;
+  color: var(--on-ink);
+  font-size: var(--t-small);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 138px;
+}
+.rail-account-role {
+  display: block;
+  font-size: var(--t-micro);
+  color: rgba(255, 255, 255, .62);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.rail-account[aria-current] .rail-avatar { background: var(--ink); color: var(--on-ink); }
+.rail-account[aria-current] .rail-account-name { color: var(--ink); }
+.rail-account[aria-current] .rail-account-role { color: rgba(14, 14, 14, .62); }
+
+/* margin-bottom, never the margin shorthand: this element also carries .rail-spacer,
+   whose margin-top:auto is what pushes the account chip and logout to the bottom of
+   the rail. A shorthand here silently resets that and the whole group rides up. */
+.rail-divider {
+  width: calc(100% - 26px);
+  height: 1px;
+  background: rgba(255, 255, 255, .16);
+  margin-bottom: var(--s-sm);
+  flex: none;
+}
+
+/* Role-gated chrome. Hidden by default and revealed once rail.js has confirmed the
+   role from the server — never the other way round, so a failed /me call cannot
+   flash admin affordances at a non-admin. */
+.rail-admin-only, .banner-role { display: none; }
+body[data-role='admin'] .rail-admin-only { display: flex; }
+body[data-role='admin'] .banner-role { display: flex; }
+
+.rail-toggle { margin-top: var(--s-xs); }
+.rail-toggle svg { transition: transform .28s var(--ease); }
+.rail-open .rail-toggle svg { transform: rotate(180deg); }
+
+/* tooltip is supplementary — every rail item also carries an aria-label */
+.rail-link::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  padding: 6px 10px;
+  border-radius: var(--r-xs);
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: var(--t-label);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-4px);
+  transition: opacity .2s var(--ease), transform .2s var(--ease);
+}
+.rail-link:hover::after, .rail-link:focus-visible::after { opacity: 1; transform: translateX(0); }
+
+.app-main {
+  min-width: 0;
+  margin-left: calc(var(--rail-current) + var(--s-md) * 2);
+  padding: var(--s-lg) var(--s-lg) var(--s-xxl);
+  /* Paired with the rail's width transition above — see the note there. The wide
+     officer table is the one thing here that could be expensive to reflow, and it
+     is not: it sits in .table-wrap with a fixed min-width, so the columns hold
+     their layout and only the scroll container's width changes. */
+  transition: margin-left .28s var(--ease);
+}
+
+.app-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-lg);
+}
+
+.app-head h1 { font-size: var(--t-page-title); letter-spacing: -.028em; }
+.app-head .muted { font-size: var(--t-small); }
+
+/* Rail links jump between sections of one long page; without this the heading
+   lands flush against the viewport edge with no breathing room above it. */
+.app-section, .tile-row { scroll-margin-top: var(--s-lg); }
+
+.app-section { margin-top: var(--s-xl); }
+.app-section > .section-head h2 { font-size: var(--t-lead); }
+
+/* ---------- filters ----------------------------------------------------- */
+
+.filter-bar {
+  display: flex;
+  gap: var(--s-sm);
+  flex-wrap: wrap;
+  align-items: center;
+  padding: var(--s-md);
+  margin-bottom: var(--s-md);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+}
+
+.filter-bar input, .filter-bar select {
+  width: auto;
+  min-width: 148px;
+  padding: 9px 13px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-small);
+}
+
+.filter-bar .btn { width: auto; margin: 0; }
+
+/* ---------- the trail (audit timeline) ---------------------------------- */
+
+.trail { display: flex; flex-direction: column; }
+
+.trail-step { position: relative; display: flex; gap: var(--s-md); padding-bottom: var(--s-lg); }
+.trail-step:last-child { padding-bottom: 0; }
+
+.trail-step::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 20px; bottom: 0;
+  width: 1px;
+  background: var(--hairline-strong);
+}
+.trail-step:last-child::before { display: none; }
+
+.trail-dot {
+  position: relative;
+  z-index: 1;
+  width: 17px; height: 17px;
+  flex: none;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 2px solid var(--hairline-strong);
+  background: var(--surface);
+}
+
+.trail-step.is-done .trail-dot { border-color: var(--ink); background: var(--ink); }
+.trail-step.is-current .trail-dot { border-color: var(--ink); background: var(--surface); }
+
+.trail-body { min-width: 0; }
+.trail-title { font-weight: 500; text-transform: capitalize; }
+.trail-meta { font-size: var(--t-small); color: var(--ink-mute); }
+.trail-detail {
+  margin-top: 6px;
+  padding: 9px 12px;
+  border-radius: var(--r-xs);
+  background: var(--surface);
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+}
+.detail-row .trail-detail { background: var(--surface); }
+
+/* horizontal variant, used on the landing page */
+.trail-track { display: flex; align-items: center; flex-wrap: nowrap; margin-top: var(--s-md); }
+
+.trail-node { display: flex; align-items: center; gap: 9px; flex: none; }
+.trail-node .trail-dot { margin: 0; }
+.trail-node span { font-size: var(--t-small); font-weight: 500; white-space: nowrap; }
+.trail-node.is-done .trail-dot { border-color: var(--ink); background: var(--ink); }
+.trail-node.is-current .trail-dot { border-color: var(--ink); background: var(--surface); }
+.trail-node.is-muted span { color: var(--ink-mute); }
+
+.trail-line { flex: 1 1 auto; height: 1px; background: var(--hairline-strong); margin: 0 12px; min-width: 18px; }
+
+/* ---------- landing-specific -------------------------------------------- */
+
+.hero { padding-top: var(--s-xxl); padding-bottom: var(--s-xl); }
+
+.hero-lede {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-xl);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-xl);
+}
+
+.hero h1 { max-width: 15ch; }
+.hero-lede .prose { max-width: 44ch; padding-bottom: 6px; }
+
+.overview-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--s-md);
+}
+
+.live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--positive); }
+
+.band { padding-top: var(--s-section); }
+
+.band-split { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: var(--s-xl); align-items: start; }
+
+.mech-list { display: flex; flex-direction: column; gap: var(--s-md); margin-top: var(--s-lg); }
+
+.mech-item { display: flex; gap: var(--s-md); padding-bottom: var(--s-md); border-bottom: 1px solid var(--hairline); }
+.mech-item:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.mech-num { font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-mute); padding-top: 3px; flex: none; }
+.mech-item h3 { font-size: var(--t-base); margin-bottom: 3px; }
+.mech-item p { font-size: var(--t-small); color: var(--ink-soft); }
+
+.demo-card { display: flex; flex-direction: column; gap: var(--s-md); }
+
+.demo-row { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); flex-wrap: wrap; }
+
+.demo-id { font-family: var(--font-mono); font-size: var(--t-demo-id); font-weight: 500; letter-spacing: .01em; }
+.demo-divider { height: 1px; background: var(--hairline); }
+
+.paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-md); margin-top: var(--s-lg); }
+
+.path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-sm);
+  padding: var(--s-lg);
+  border-radius: var(--r-lg);
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-rest);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.path:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+.path h3 { font-size: var(--t-lead); }
+.path p { font-size: var(--t-small); opacity: .82; }
+.path .path-go { margin-top: var(--s-sm); font-weight: 500; font-size: var(--t-small); display: inline-flex; align-items: center; gap: 6px; }
+
+.closing {
+  margin-top: var(--s-section);
+  padding: var(--s-xxl) var(--s-xl);
+  border-radius: var(--r-xl);
+  background: var(--ink);
+  color: var(--on-ink);
+  text-align: center;
+}
+.closing h2 { font-size: var(--t-closing); letter-spacing: -.03em; margin-bottom: var(--s-sm); }
+.closing p { color: rgba(255, 255, 255, .68); max-width: 52ch; margin: 0 auto var(--s-lg); }
+.closing-actions { display: flex; gap: var(--s-sm); justify-content: center; flex-wrap: wrap; }
+.closing .btn { background: var(--on-ink); color: var(--ink); }
+.closing .btn:hover { background: var(--on-ink-hover); }
+.closing .btn-secondary { background: transparent; color: var(--on-ink); border-color: rgba(255, 255, 255, .32); }
+.closing .btn-secondary:hover { border-color: var(--on-ink); background: rgba(255, 255, 255, .08); }
+
+/* ---------- auth / single-task pages ------------------------------------ */
+
+.task-page { padding-top: var(--s-xxl); padding-bottom: var(--s-xxl); }
+.task-head { margin-bottom: var(--s-lg); }
+.task-head h1 { font-size: var(--t-task-title); letter-spacing: -.03em; margin-bottom: 8px; }
+.task-head p { color: var(--ink-soft); }
+
+.task-card { background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--r-xl); padding: var(--s-lg); box-shadow: var(--shadow-rest); }
+
+.task-alt { margin-top: var(--s-md); font-size: var(--t-small); color: var(--ink-mute); text-align: center; }
+.task-alt a { font-weight: 500; color: var(--ink); }
+
+.assurance {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: var(--s-md);
+  border-radius: var(--r-md);
+  background: var(--tile-mint);
+  color: var(--tile-mint-ink);
+  font-size: var(--t-small);
+}
+.assurance svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+
+/* Mint reads as reassurance. Where the note explains a deliberate limitation
+   rather than protecting the reader, it takes the neutral tile instead. */
+.assurance-neutral { background: var(--tile-lilac); color: var(--tile-lilac-ink); }
+.app-section .assurance { margin-bottom: var(--s-md); }
+
+/* ---------- analytics bars ---------------------------------------------- */
+
+.bar-list { display: flex; flex-direction: column; gap: 13px; }
+.bar-row { display: grid; grid-template-columns: minmax(84px, 24%) 1fr auto; gap: var(--s-md); align-items: center; }
+.bar-name { font-size: var(--t-small); text-transform: capitalize; }
+
+/* Both are <span>s. display:block is not cosmetic here — an inline element ignores
+   width and height outright, so the inline width:N% the chart writes on .bar-fill
+   was being discarded and every bar rendered empty. */
+.bar-track { display: block; height: 10px; border-radius: var(--r-pill); background: var(--canvas); overflow: hidden; }
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  min-width: 4px;
+  /* The chart is the one place a width transition is cheap: a 10px strip with no
+     content to reflow. Bars grow in rather than snapping to length. */
+  transition: width .5s var(--ease);
+}
+.bar-fill.is-peach { background: var(--tile-peach-ink); }
+.bar-fill.is-ice   { background: var(--tile-ice-ink); }
+.bar-fill.is-mint  { background: var(--tile-mint-ink); }
+
+.bar-value { font-family: var(--font-mono); font-size: var(--t-small); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* ---------- landing: inline tracker -------------------------------------- */
+
+/* The landing tracker is not a mockup of the product — it queries a real case.
+   It therefore needs real form chrome, sized to sit inside a card. */
+.track-inline { display: flex; gap: var(--s-sm); flex-wrap: wrap; }
+.track-inline input { flex: 1 1 190px; width: auto; text-transform: uppercase; }
+.track-inline input::placeholder { text-transform: none; }
+.track-inline .btn { flex: none; }
+
+.demo-result { display: flex; flex-direction: column; gap: var(--s-md); }
+.demo-result[data-state='idle'] .demo-id { letter-spacing: .08em; }
+
+.demo-meta { display: flex; flex-wrap: wrap; gap: var(--s-lg); margin: 0; }
+.demo-meta div { display: flex; flex-direction: column; gap: 2px; }
+.demo-meta dt { font-size: var(--t-small); color: var(--ink-mute); }
+.demo-meta dd { margin: 0; font-weight: 500; }
+
+.demo-note { font-size: var(--t-small); color: var(--ink-soft); }
+.demo-note strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 2px; }
+
+.live-dot.is-down::before { background: var(--ink-mute); }
+
+/* ---------- single-task page column -------------------------------------- */
+
+.container-task { max-width: 660px; }
+.track-result:empty { display: none; }
+.track-result { margin-top: var(--s-lg); }
+.track-result .card-head { align-items: center; }
+
+.input-lg { font-size: var(--t-lead); padding: 15px 16px; letter-spacing: .06em; text-transform: uppercase; }
+.input-lg::placeholder { letter-spacing: .04em; }
+
+/* ---------- receipt actions ---------------------------------------------- */
+
+.receipt-actions { display: flex; gap: var(--s-sm); flex-wrap: wrap; margin-top: var(--s-md); }
+.btn-invert { background: var(--on-ink); color: var(--ink); }
+.btn-invert:hover { background: var(--on-ink-hover); }
+.receipt .btn-secondary { background: transparent; color: var(--on-ink); border-color: rgba(255, 255, 255, .32); }
+.receipt .btn-secondary:hover { background: rgba(255, 255, 255, .08); border-color: var(--on-ink); }
+
+/* ---------- tiles as controls -------------------------------------------- */
+
+/* On the officer queue the status tiles double as filters, so they are real
+   buttons. They keep the tile's own type scale rather than inheriting button type. */
+button.tile {
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+button.tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-rest); }
+button.tile[aria-pressed='true'] { box-shadow: inset 0 0 0 2px currentColor; }
+
+.tile-row[hidden], .banner[hidden] { display: none; }
+
+/* ---------- inline row editing / updating -------------------------------- */
+
+tr[hidden] { display: none; }
+
+.detail-row > td { background: var(--canvas); padding: var(--s-lg) 18px; }
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--s-md);
+}
+.field-grid .field { margin-bottom: 0; }
+
+.row-update { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.row-update select { width: auto; min-width: 132px; padding: 8px 11px; border-radius: var(--r-pill); font-size: var(--t-small); }
+.row-update .note-input { width: auto; min-width: 168px; flex: 1 1 168px; padding: 8px 12px; border-radius: var(--r-pill); font-size: var(--t-small); }
+
+.row-msg:empty { display: none; }
+.row-msg { margin-top: 8px; max-width: 320px; }
+
+.filter-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.pill-inactive { background: var(--hairline); color: var(--ink-soft); }
+
+/* ---------- account page -------------------------------------------------- */
+
+.account-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-md); align-items: start; }
+
+.account-identity { display: flex; align-items: center; gap: var(--s-md); }
+
+.account-avatar {
+  display: grid;
+  place-items: center;
+  width: 56px; height: 56px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-size: var(--t-lead);
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+.account-name { font-size: var(--t-lead); font-weight: 500; letter-spacing: -.02em; }
+
+/* ---------- admin analytics ---------------------------------------------- */
+
+.analytics-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-md); }
+
+/* ---------- landing: public standings ------------------------------------ */
+
+.standings-board { margin-top: var(--s-lg); }
+
+.standing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-rest);
+  counter-reset: standing;
+}
+
+.standing {
+  display: flex;
+  align-items: center;
+  gap: var(--s-md);
+  padding: 18px var(--s-lg);
+  background: var(--surface);
+}
+
+/* Top of the board takes the ink fill — the one emphasis element in this band. */
+.standing.is-lead { background: var(--ink); color: var(--on-ink); }
+.standing.is-lead .standing-note,
+.standing.is-lead .standing-label { color: rgba(255, 255, 255, .62); }
+.standing.is-lead .standing-rank { background: var(--on-ink); color: var(--ink); }
+
+.standing-rank {
+  display: grid;
+  place-items: center;
+  width: 30px; height: 30px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 500;
+}
+
+.standing-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.standing-name { font-size: var(--t-base); font-weight: 500; letter-spacing: -.015em; }
+.standing-note { font-size: var(--t-small); color: var(--ink-mute); }
+
+.standing-figures { display: flex; gap: var(--s-lg); flex: none; }
+.standing-stat { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.standing-value { font-family: var(--font-mono); font-size: var(--t-base); font-weight: 500; font-variant-numeric: tabular-nums; }
+.standing-label { font-size: var(--t-micro); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); }
+.standing-stat.is-score .standing-value { font-size: var(--t-lead); }
+
+@media (max-width: 620px) {
+  .standing { flex-wrap: wrap; gap: var(--s-sm) var(--s-md); padding: var(--s-md); }
+  .standing-body { flex: 1 1 60%; }
+  .standing-figures { width: 100%; justify-content: space-between; gap: var(--s-md); padding-left: 46px; }
+  .standing-stat { align-items: flex-start; }
+}
+
+/* ---------- officer standings -------------------------------------------- */
+
+.podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-md); }
+
+.podium-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--s-lg);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-rest);
+}
+
+/* One black element per group — first place, and nothing else on the page. */
+.podium-card.is-first { background: var(--ink); color: var(--on-ink); border-color: var(--ink); box-shadow: var(--shadow-heavy); }
+.podium-card.is-first .podium-note, .podium-card.is-first .podium-meta dt { color: rgba(255, 255, 255, .68); }
+.podium-card.is-first .podium-meta { border-top-color: rgba(255, 255, 255, .18); }
+
+.podium-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-sm); }
+.podium-head .label { opacity: .7; }
+
+.podium-name { font-size: var(--t-lead); font-weight: 500; letter-spacing: -.02em; }
+.podium-score { font-size: var(--t-stat); font-weight: 500; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.podium-note { font-size: var(--t-small); color: var(--ink-soft); }
+
+.podium-meta { display: flex; gap: var(--s-lg); margin: var(--s-md) 0 0; padding-top: var(--s-md); border-top: 1px solid var(--hairline); }
+.podium-meta div { display: flex; flex-direction: column; gap: 1px; }
+.podium-meta dt { font-size: var(--t-micro); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-mute); }
+.podium-meta dd { margin: 0; font-family: var(--font-mono); font-size: var(--t-small); font-weight: 500; }
+
+/* Three segments in one track: what became of this officer's closures. */
+.quality-track { display: flex; }
+.quality-track .bar-fill { border-radius: 0; min-width: 0; }
+.quality-track .bar-fill:first-child { border-radius: var(--r-pill) 0 0 var(--r-pill); }
+.quality-track .bar-fill:last-child { border-radius: 0 var(--r-pill) var(--r-pill) 0; }
+.bar-fill.is-danger { background: var(--danger); }
+
+tr.is-muted-row td { color: var(--ink-mute); }
+
+@media (max-width: 860px) {
+  .podium { grid-template-columns: minmax(0, 1fr); }
+}
+
+.review-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--s-md); }
+.review-card .verify-actions { margin-top: var(--s-md); }
+.review-card .review-note { width: auto; flex: 1 1 160px; padding: 9px 13px; border-radius: var(--r-pill); font-size: var(--t-small); }
+
+/* A disputed resolution is the one thing on this screen that should stop an admin.
+   The full-perimeter ring is the same device the officer queue's active filter tile
+   uses, rather than a decorative coloured edge. */
+.review-card.is-disputed { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger), var(--shadow-rest); }
+
+@media (max-width: 560px) {
+  .review-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- motion ------------------------------------------------------ */
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes dot-fill {
+  from { transform: scale(.4); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.rise { animation: rise .7s var(--ease) backwards; }
+.rise-1 { animation-delay: .04s; }
+.rise-2 { animation-delay: .09s; }
+.rise-3 { animation-delay: .14s; }
+.rise-4 { animation-delay: .19s; }
+.rise-5 { animation-delay: .24s; }
+
+/* the authored moment: the status trail fills in sequence, dramatising the
+   mechanism this product is built around */
+.trail-track .trail-dot { animation: dot-fill .5s var(--ease) backwards; }
+.trail-track .trail-node:nth-child(1) .trail-dot { animation-delay: .40s; }
+.trail-track .trail-node:nth-child(3) .trail-dot { animation-delay: .62s; }
+.trail-track .trail-node:nth-child(5) .trail-dot { animation-delay: .84s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ---------- responsive --------------------------------------------------- */
+
+@media (max-width: 1080px) {
+  .band-split { grid-template-columns: minmax(0, 1fr); gap: var(--s-lg); }
+  .analytics-split, .account-split { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .tile-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :root { --s-section: 76px; }
+}
+
+@media (max-width: 860px) {
+  /* the rail becomes a bottom bar — never a hamburger.
+     Retracting is meaningless here, so the toggle goes away and .rail-open is
+     neutralised rather than left to fight the bottom-bar layout. */
+  .rail, .rail-open .rail {
+    top: auto; left: var(--s-md); right: var(--s-md); bottom: var(--s-md);
+    width: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: var(--s-sm);
+    gap: 4px;
+    border-radius: var(--r-lg);
+    transition: none;
+  }
+  .rail-head, .rail-divider { display: none; }
+  .rail-spacer { margin-top: 0; }
+  .rail-account, .rail-open .rail-account { height: 44px; padding: 0; }
+  .rail-link::after { display: none; }
+  .rail-toggle { display: none; }
+  .rail-open .rail-link { width: 44px; justify-content: center; padding: 0; }
+  .rail-open .rail-label { display: none; }
+  .app-main, .rail-open .app-main { margin-left: 0; padding-bottom: 112px; transition: none; }
+}
+
+@media (max-width: 620px) {
+  .paths { grid-template-columns: minmax(0, 1fr); }
+  .site-header { padding: var(--s-md) var(--s-md) 0; }
+  .container { padding-inline: var(--s-md); }
+  .app-main { padding: var(--s-md) var(--s-md) 112px; }
+  .card, .task-card { padding: var(--s-md); }
+  .closing { padding: var(--s-xl) var(--s-md); }
+  .site-nav a { padding: 8px 11px; }
+  .bar-row { grid-template-columns: minmax(70px, 30%) 1fr auto; }
+}
+
+@media (max-width: 560px) {
+  .tile-row { grid-template-columns: minmax(0, 1fr); }
+  .detail-row > td { padding: var(--s-md); }
+  .demo-meta { gap: var(--s-md); }
+  .tile { min-height: 0; }
+  .trail-track { flex-wrap: wrap; gap: 10px; }
+  .trail-line { display: none; }
+  .trail-node { flex: 1 1 100%; }
+}

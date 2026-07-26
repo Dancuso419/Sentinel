@@ -21,14 +21,34 @@ CREATE TABLE IF NOT EXISTS reports (
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','investigating','resolved')),
   resolution_note TEXT,
   unseen_status_change INTEGER NOT NULL DEFAULT 0,
+  -- Whether the reporter was the person affected or a witness reporting on someone
+  -- else's behalf. This decides how much a reporter's confirmation is worth: a
+  -- witness can say a report was acted on, but not that the harm was put right.
+  reporter_relationship TEXT CHECK(reporter_relationship IN ('affected','witness')),
+  -- The reporter's response to a resolution. Evidence, never a gate: an anonymous
+  -- or unreachable reporter must not be able to hold a case open by silence.
+  reporter_verdict TEXT CHECK(reporter_verdict IN ('confirmed','disputed')),
+  reporter_verdict_note TEXT,
+  reporter_verdict_at TEXT,
+  -- Admin sign-off. The universal backstop, applied to every resolved case
+  -- regardless of whether the reporter ever responds.
+  reviewed_by INTEGER REFERENCES users(id),
+  reviewed_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Despite the name this is the full case-event log, not only status transitions.
+-- `event` distinguishes them: 'status' for a workflow move, 'note' for a revision
+-- of the resolution note, 'verdict' for the reporter's response, 'review' for admin
+-- sign-off. Keeping them in one append-only table is what makes the trail able to
+-- show the whole chain of custody in order.
 CREATE TABLE IF NOT EXISTS status_history (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   report_id INTEGER NOT NULL REFERENCES reports(id),
   status TEXT NOT NULL,
+  event TEXT NOT NULL DEFAULT 'status',
+  detail TEXT,
   updated_by TEXT,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

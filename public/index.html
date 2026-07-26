@@ -1,13 +1,233 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Sentinel CCRTS</title><link rel="stylesheet" href="css/style.css"></head>
+<!--
+  DIRECTION CONTRACT — Sentinel landing
+
+  THESIS: A case ID is a promise the paper system could not keep. This page owns
+  "every report gets a number, every number keeps its trail" and refuses the civic-portal
+  arrangement it would otherwise ship: navy banner, crest, three feature cards, stock photo.
+
+  OWN-WORLD: Warm off-white canvas (#F2F1ED), floating white paper, one pure-black
+  element per group, four pastel data tiles (peach/mint/ice/lilac) that own whole regions.
+  Archivo grotesk; Spline Sans Mono for identifiers only. 22-28px corners everywhere.
+
+  STORY: The visitor sees the system is running before reading a claim about it, learns
+  a case ID is the whole mechanism, and either files a report or tracks one — in one screen.
+
+  FIRST VIEWPORT: Display headline left, 15ch. Beneath it, LIVE SYSTEM STATUS with five
+  tiles from /api/stats — four pastel counts, then the black tile carrying "Report an
+  incident" as the row's primary action.
+
+  FORM: Working system overview, pinned by the user over the examiner-first alternative.
+  Signature moment: the tracker below is not a mockup — it queries a real case and fills
+  the real trail.
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sentinel — Crime Reporting and Tracking</title>
+  <meta name="description" content="Report an incident and follow what happens to it. Every report gets a case ID; every status change is logged.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-  <header><h1>Sentinel — Crime Reporting and Tracking System</h1></header>
+  <header class="site-header">
+    <a class="wordmark" href="index.html">
+      <svg class="wordmark-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="4" cy="12" r="3" fill="currentColor"/>
+        <path d="M7 12h4M13 12h4" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+        <circle cx="20" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      Sentinel
+    </a>
+    <nav class="site-nav">
+      <a href="report.html">Report</a>
+      <a href="track.html">Track</a>
+      <a class="nav-cta" href="login.html">Log in</a>
+    </nav>
+  </header>
+
   <main>
-    <p><a href="report.html">Report a Crime (no account needed)</a></p>
-    <p><a href="track.html">Track an Existing Case</a></p>
-    <p><a href="login.html">Citizen / Officer / Admin Login</a></p>
-    <p><a href="register.html">Register as a Citizen</a></p>
+    <section class="hero container">
+      <div class="hero-lede">
+        <h1 class="display rise rise-1">Every report gets a number. Every number keeps its trail.</h1>
+        <p class="prose rise rise-2">Sentinel is a computerized crime reporting and tracking system. File an
+          incident with or without an account, get a case ID on the spot, and check what happened
+          to it without going back to a station.</p>
+      </div>
+
+      <div class="overview-head rise rise-3">
+        <h2 class="label muted">Live system status</h2>
+        <span class="live-dot">Reading from the database</span>
+      </div>
+
+      <div class="tile-row rise rise-4" style="--tile-cols: 5">
+        <div class="tile tile-lilac">
+          <span class="label">Total cases</span>
+          <span class="tile-figure" data-stat="total">—</span>
+          <span class="tile-note">On record right now</span>
+        </div>
+        <div class="tile tile-peach">
+          <span class="label">Pending</span>
+          <span class="tile-figure" data-stat="pending">—</span>
+          <span class="tile-note">Filed, awaiting triage</span>
+        </div>
+        <div class="tile tile-ice">
+          <span class="label">Investigating</span>
+          <span class="tile-figure" data-stat="investigating">—</span>
+          <span class="tile-note">An officer is working it</span>
+        </div>
+        <div class="tile tile-mint">
+          <span class="label">Resolved</span>
+          <span class="tile-figure" data-stat="resolved">—</span>
+          <span class="tile-note">Closed with a note on file</span>
+        </div>
+        <a class="tile tile-action" href="report.html">
+          <span class="label">Something happened</span>
+          <span class="tile-corner" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none"><path d="M4 12L12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span class="tile-figure">Report an incident</span>
+          <span class="tile-note">No account needed — takes about a minute</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="band container" id="trail">
+      <div class="band-split">
+        <div>
+          <h2 class="heading">A case ID is the whole mechanism.</h2>
+          <p class="prose" style="margin-top: 12px">Paper reports go into a ledger and stop there. Here, the number you
+            are given is a live handle on the record — and every hand that touches it is written down.</p>
+
+          <ol class="mech-list">
+            <li class="mech-item">
+              <span class="mech-num">01</span>
+              <div>
+                <h3>You file, the system numbers it</h3>
+                <p>A report submitted without an account stores no identity at all — and still returns a
+                  <code class="mono">CR-YYYY-NNNN</code> case ID. Anonymity and follow-up usually trade off. Here they don't.</p>
+              </div>
+            </li>
+            <li class="mech-item">
+              <span class="mech-num">02</span>
+              <div>
+                <h3>An officer moves it forward</h3>
+                <p>Cases run <em>pending → investigating → resolved</em>, and never backward. Each
+                  transition writes a row naming who changed it and when.</p>
+              </div>
+            </li>
+            <li class="mech-item">
+              <span class="mech-num">03</span>
+              <div>
+                <h3>You read the trail back</h3>
+                <p>Type the case ID into the panel beside this and the status comes straight from the
+                  database. That is the whole answer to "what happened to my report?"</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="card demo-card">
+          <div class="card-head" style="margin-bottom: 0">
+            <h2 class="label muted">Try it — track a case</h2>
+          </div>
+
+          <form id="track-inline" class="track-inline" novalidate>
+            <label class="visually-hidden" for="inline-case">Case ID</label>
+            <input id="inline-case" name="case_id" class="mono" placeholder="CR-2026-0001" autocomplete="off" spellcheck="false">
+            <button class="btn" type="submit">Check status</button>
+          </form>
+
+          <div class="demo-divider"></div>
+
+          <div id="inline-result" class="demo-result" data-state="idle">
+            <div class="demo-row" aria-hidden="true">
+              <span class="demo-id muted">CR-••••-••••</span>
+            </div>
+            <div class="trail-track" aria-hidden="true">
+              <div class="trail-node is-muted"><span class="trail-dot"></span><span>Filed</span></div>
+              <div class="trail-line"></div>
+              <div class="trail-node is-muted"><span class="trail-dot"></span><span>Investigating</span></div>
+              <div class="trail-line"></div>
+              <div class="trail-node is-muted"><span class="trail-dot"></span><span>Resolved</span></div>
+            </div>
+            <p class="muted" style="font-size: var(--t-small)">Enter a case ID above. Nothing here is a mockup — the
+              status you get back is read live from the case record.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band container" id="standings">
+      <div class="overview-head">
+        <div>
+          <h2 class="heading">Who is working these cases.</h2>
+          <p class="prose" style="margin-top: 12px">Officers are ranked by resolutions the reporter
+            did not reject — not by how many cases they close. Closing a lot of cases badly does not
+            move anyone up this board.</p>
+        </div>
+      </div>
+
+      <div id="standings-board" class="standings-board">
+        <p class="muted">Loading the board…</p>
+      </div>
+
+      <p class="muted" style="font-size: var(--t-small); margin-top: var(--s-md); max-width: 72ch">
+        Score is cases resolved minus the resolutions the person who reported them said were not
+        resolved. Average close is the mean days from a report being filed to it being closed.
+        Published because a person deciding whether to report at all is entitled to see whether
+        resolutions here hold up.
+      </p>
+    </section>
+
+    <section class="band container">
+      <h2 class="heading">Two ways in. Pick the one that fits your situation.</h2>
+      <div class="paths">
+        <a class="path tile-peach" href="report.html">
+          <h3>Report without an account</h3>
+          <p>Nothing is stored that points back to you — no name, no email, no citizen record. You are
+            shown a case ID once, on screen. Write it down; it cannot be recovered.</p>
+          <span class="path-go">Start an anonymous report
+            <svg class="btn-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </a>
+        <a class="path tile-ice" href="register.html">
+          <h3>Report with an account</h3>
+          <p>Your reports collect on one dashboard, you can correct or withdraw them while they are
+            still pending, and you get a banner the moment a status changes.</p>
+          <span class="path-go">Create a citizen account
+            <svg class="btn-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="closing">
+        <h2>Keep the case ID. It is the only key.</h2>
+        <p>For a walk-in report there is no account to log back into and no way to look the number up
+          again. Screenshot it, write it on paper, send it to yourself — before you close the page.</p>
+        <div class="closing-actions">
+          <a class="btn" href="report.html">Report an incident</a>
+          <a class="btn btn-secondary" href="track.html">Track a case</a>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="site-footer">
+    <span>Sentinel — Computerized Crime Reporting and Tracking System (CCRTS).
+      A final-year project build, not an official police service.</span>
+    <nav>
+      <a href="report.html">Report</a>
+      <a href="track.html">Track</a>
+      <a href="login.html">Log in</a>
+      <a href="register.html">Register</a>
+    </nav>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/landing.js"></script>
 </body>
 </html>

@@ -2,3 +2,8 @@ node_modules/
 database/ccrts.db
 uploads/*
 !uploads/.gitkeep
+
+# Local, transient: database snapshots taken before a destructive step, and files
+# rescued from uploads/ before clearing it. Never project content.
+database/*.backup-*
+database/orphaned-upload-*

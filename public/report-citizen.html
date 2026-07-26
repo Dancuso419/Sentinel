@@ -1,23 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>Submit Report — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Submit a report — Sentinel</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
-  <header><h1>Submit a Crime Report</h1></header>
-  <main>
-    <form id="report-form" data-endpoint="/api/reports">
-      <select name="type" required>
-        <option value="">Type of incident</option>
-        <option>Theft</option><option>Assault</option><option>Vandalism</option><option>Fraud</option><option>Other</option>
-      </select>
-      <input name="location" placeholder="Location" required>
-      <textarea name="description" placeholder="Description" required></textarea>
-      <input name="incident_time" type="datetime-local" required>
-      <label>Evidence (jpg, png, or pdf, max 5MB): <input name="evidence" type="file" accept=".jpg,.jpeg,.png,.pdf"></label>
-      <label><input name="is_anonymous" type="checkbox" value="true"> Submit anonymously</label>
-      <button type="submit">Submit Report</button>
-      <p id="message"></p>
-    </form>
+  <header class="site-header">
+    <a class="wordmark" href="citizen-dashboard.html">
+      <svg class="wordmark-mark" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="4" cy="12" r="3" fill="currentColor"/>
+        <path d="M7 12h4M13 12h4" stroke="currentColor" stroke-width="1.5"/>
+        <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+        <circle cx="20" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+      </svg>
+      Sentinel
+    </a>
+    <nav class="site-nav">
+      <a href="citizen-dashboard.html">My reports</a>
+      <a href="report-citizen.html" aria-current="page">New report</a>
+    </nav>
+  </header>
+
+  <main class="container container-task task-page">
+    <div class="task-head">
+      <h1>Submit a report</h1>
+      <p>This one lands on your dashboard. You can correct or withdraw it for as long as it stays
+        pending, and you will see a banner the moment an officer moves it.</p>
+    </div>
+
+    <div class="task-card">
+      <form id="report-form" data-endpoint="/api/reports" novalidate>
+        <label class="field">
+          <span>What happened?</span>
+          <select name="type" required>
+            <option value="">Choose an incident type</option>
+            <option>Theft</option>
+            <option>Assault</option>
+            <option>Vandalism</option>
+            <option>Fraud</option>
+            <option>Other</option>
+          </select>
+        </label>
+
+        <fieldset class="field choice-set">
+          <legend>Were you the one affected?</legend>
+          <label class="choice">
+            <input type="radio" name="reporter_relationship" value="affected" required>
+            <span>It happened to me
+              <span class="field-hint">You will be asked to confirm the outcome once the case closes.</span>
+            </span>
+          </label>
+          <label class="choice">
+            <input type="radio" name="reporter_relationship" value="witness">
+            <span>I saw it, or I am reporting for someone else
+              <span class="field-hint">A witness can say a case was handled, but not whether the harm was put right — so an administrator reviews the outcome instead.</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <label class="field">
+          <span>Where did it happen?</span>
+          <input name="location" placeholder="e.g. Bank Road" required>
+        </label>
+
+        <label class="field">
+          <span>When did it happen?</span>
+          <input name="incident_time" type="datetime-local" required>
+        </label>
+
+        <label class="field">
+          <span>Describe it in your own words</span>
+          <textarea name="description" placeholder="What you saw, who was involved, anything that would help an officer find it." required></textarea>
+        </label>
+
+        <label class="field">
+          <span>Evidence <span class="field-hint">— optional</span></span>
+          <input name="evidence" type="file" accept=".jpg,.jpeg,.png,.pdf">
+          <span class="field-hint">A photo or document. JPG, PNG or PDF, up to 5MB.</span>
+        </label>
+
+        <label class="field field-checkbox">
+          <input name="is_anonymous" type="checkbox" value="true">
+          <span>Hide my name from the officer handling this
+            <span class="field-hint">The case still appears on your dashboard, but the officer sees
+              "Anonymous" where your name would be.</span>
+          </span>
+        </label>
+
+        <button class="btn btn-submit" type="submit">Submit report</button>
+        <p id="message" class="msg" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+
+    <p class="task-alt"><a href="citizen-dashboard.html">Back to my reports</a></p>
   </main>
+
+  <footer class="site-footer">
+    <span>Sentinel — Computerized Crime Reporting and Tracking System (CCRTS).</span>
+    <nav>
+      <a href="citizen-dashboard.html">My reports</a>
+      <a href="track.html">Track</a>
+    </nav>
+  </footer>
+
+  <script src="js/api.js"></script>
   <script src="js/report-form.js"></script>
 </body>
 </html>

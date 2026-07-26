@@ -1,13 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><title>My Reports — Sentinel</title><link rel="stylesheet" href="css/style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My reports — Sentinel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script>try{var r=localStorage.getItem('sentinel.rail');if(r?r==='open':innerWidth>=1200)document.documentElement.classList.add('rail-open')}catch(e){}</script>
+</head>
 <body>
-  <header><h1>My Reports</h1><nav><a href="report-citizen.html">Submit New Report</a><button id="logout-btn" type="button">Logout</button></nav></header>
-  <main>
-    <div id="banner" style="display:none" class="success"></div>
-    <table id="reports-table"><thead><tr><th>Case ID</th><th>Type</th><th>Status</th><th>Updated</th><th>Evidence</th><th>PDF</th><th>Actions</th></tr></thead><tbody></tbody></table>
+  <nav class="rail" aria-label="Main">
+    <div class="rail-head">
+      <span class="rail-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <circle cx="4" cy="12" r="3" fill="currentColor"/>
+          <path d="M7 12h4M13 12h4" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="12" cy="12" r="2.4" fill="currentColor"/>
+          <circle cx="20" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/>
+        </svg>
+      </span>
+      <span class="rail-wordmark">Sentinel</span>
+    </div>
+
+    <a class="rail-link" href="citizen-dashboard.html" aria-current="page" data-label="My reports">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 3h8l4 4v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 3v4h4M6.5 11h7M6.5 14h4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="rail-label">My reports</span>
+    </a>
+    <a class="rail-link" href="report-citizen.html" data-label="New report">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span class="rail-label">New report</span>
+    </a>
+    <a class="rail-link" href="track.html" data-label="Track a case">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1.5"/><path d="m13.5 13.5 3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span class="rail-label">Track a case</span>
+    </a>
+
+    <span class="rail-divider rail-spacer" aria-hidden="true"></span>
+
+    <a class="rail-link rail-account" id="rail-account" href="account.html" data-label="Account">
+      <span class="rail-avatar" data-account="initials" aria-hidden="true">··</span>
+      <span class="rail-label">
+        <span class="rail-account-name" data-account="name">Loading…</span>
+        <span class="rail-account-role" data-account="role"></span>
+      </span>
+    </a>
+
+    <button class="rail-link" id="logout-btn" type="button" data-label="Log out">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M8 3H5a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 7l3 3-3 3M15 10H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rail-label">Log out</span>
+    </button>
+
+    <button class="rail-link rail-toggle" id="rail-toggle" type="button" aria-expanded="false" aria-label="Expand sidebar" data-label="Expand sidebar">
+      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7.5 5.5 12 10l-4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="rail-label">Collapse</span>
+    </button>
+  </nav>
+
+  <main class="app-main">
+    <div class="app-head">
+      <div>
+        <h1>My reports</h1>
+        <p class="muted">Everything you have filed with this account, newest first.</p>
+      </div>
+      <a class="btn" href="report-citizen.html">
+        <svg class="btn-arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        New report
+      </a>
+    </div>
+
+    <div id="banner" class="banner" hidden role="status" aria-live="polite"></div>
+
+    <div class="tile-row" style="--tile-cols: 3" id="summary" hidden>
+      <div class="tile tile-peach">
+        <span class="label">Pending</span>
+        <span class="tile-figure" data-count="pending">0</span>
+        <span class="tile-note">Still editable by you</span>
+      </div>
+      <div class="tile tile-ice">
+        <span class="label">Investigating</span>
+        <span class="tile-figure" data-count="investigating">0</span>
+        <span class="tile-note">Locked — an officer has it</span>
+      </div>
+      <div class="tile tile-mint">
+        <span class="label">Resolved</span>
+        <span class="tile-figure" data-count="resolved">0</span>
+        <span class="tile-note">Closed with a note on file</span>
+      </div>
+    </div>
+
+    <section class="app-section">
+      <div class="section-head">
+        <h2>Case list</h2>
+        <span class="muted" style="font-size: var(--t-small)">A report can be corrected or withdrawn
+          only while it is pending.</span>
+      </div>
+      <div class="table-wrap">
+        <table id="reports-table">
+          <thead>
+            <tr>
+              <th scope="col">Case ID</th>
+              <th scope="col">Type</th>
+              <th scope="col">Status</th>
+              <th scope="col">Last updated</th>
+              <th scope="col">Files</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </main>
+
   <script src="js/api.js"></script>
+  <script src="js/rail.js"></script>
   <script src="js/citizen-dashboard.js"></script>
 </body>
 </html>
